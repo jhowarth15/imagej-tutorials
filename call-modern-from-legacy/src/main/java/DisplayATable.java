@@ -10,6 +10,7 @@ import ij.IJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 import net.imagej.ImageJ;
+import net.imagej.legacy.IJ2;
 import net.imagej.table.DefaultGenericTable;
 import net.imagej.table.GenericTable;
 
@@ -34,8 +35,8 @@ public class DisplayATable implements PlugIn {
 	}
 
 	private void displayTable(final int rowCount, final int colCount) {
-		// create an ImageJ application context with the necessary services
-		final ImageJ ij = new ImageJ(DisplayService.class, UIService.class);
+		// get the ImageJ application context
+		final ImageJ ij = IJ2.getInstance();
 
 		// create a spreadsheet
 		final GenericTable spreadsheet =
