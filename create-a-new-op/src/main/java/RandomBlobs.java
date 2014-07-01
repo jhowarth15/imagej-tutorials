@@ -29,6 +29,7 @@
  */
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 import net.imagej.ImageJ;
 import net.imagej.ops.Op;
@@ -43,6 +44,7 @@ import org.scijava.ItemIO;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.util.LongArray;
 
 @Plugin(type = Op.class, name = "blobs")
 public class RandomBlobs<T extends RealType<T>> implements Op {
@@ -51,14 +53,20 @@ public class RandomBlobs<T extends RealType<T>> implements Op {
 	private boolean isDone = false;
 	@Parameter
 	private LogService log;
-	private static int xDim = 32;
-	private static int yDim = 32; 
+	@Parameter(type = ItemIO.INPUT)
+	private int blobNum;
+	@Parameter(type = ItemIO.INPUT)
+	private int blobSize;
+	@Parameter(type = ItemIO.INPUT)
+	private int xDim;
+	@Parameter(type = ItemIO.INPUT)
+	private int yDim; 
 
 	public static void main(final String... args) throws Exception {
 		final ImageJ ij = new ImageJ();
 
 		// Run our op!
-		final Object blobs = ij.op().run("blobs", 5, 5);
+		final Object blobs = ij.op().run("blobs", 5, 2, 32, 32);
 
 		// And what value did our op return?
 		ij.log().info(blobs);
@@ -67,12 +75,7 @@ public class RandomBlobs<T extends RealType<T>> implements Op {
 		ij.log().info(ascii);
 	}
 
-	@Parameter(type = ItemIO.INPUT)
-	private int blobNum;
 	
-	@Parameter(type = ItemIO.INPUT)
-	private int blobSize;
-
 	@Override
 	public void run() {
 		// produce a 256x256 float64 array-backed image by default
@@ -92,21 +95,31 @@ public class RandomBlobs<T extends RealType<T>> implements Op {
 		for (int i = 0; i < dims.length; i++) {
 			total *= dims[i];
 		}
-		ArrayList<Long[]> axes = new ArrayList<Long[]>();
+		LongArray axes = new LongArray();
 		RandomAccess<T> maybe = image.randomAccess(image);
+		
 		for (int i = 0; i < blobNum; i++) {
-
 			long index = (long) (Math.random() * total);
 			IntervalIndexer.indexToPosition(index, dims, pos);
 			maybe.setPosition(pos);
 			maybe.get().setReal(1.0);
-			axes = draw(pos[0], pos[1], blobSize);
+			axes = draw(pos[0], pos[1], blobSize, xDim, yDim);
+			axes = transpose(axes);
 			for(int j = 0; j < axes.size(); j++)
 			{
-				Long[] point = axes.get(j); 
+				long[] point = new long[axes.size()];
+				point = axes.getArray();
+				
+				long[] forPos = new long[2];
+
 				for(int k = 0; k < pos.length; k++)
 				{
-					pos[k] = (long) point[k];
+					int m = k * 2;
+					pos[0] = point[m];
+					pos[1] = point[m + 1];
+					
+					
+					
 				}
 				
 				maybe.setPosition(pos);
@@ -117,31 +130,65 @@ public class RandomBlobs<T extends RealType<T>> implements Op {
 
 	}
 
-	public static ArrayList<Long[]> draw(long posX, long posY, int radius) {
-
-		long x = posX;
-		long y = posY;
-
-		ArrayList<Long[]> coordinate = new ArrayList<Long[]>();
-		for (int i = 0; i <= 2 * posX; i++) {
-			for (int j = 0; j <= 2 * posY; j++) {
-				double dx = (x - i);
-				double dy = (y - j);
+	public static LongArray draw(long posX, long posY, int radius, int xDim, int yDim) {
+		
+		
+		Collection<LongArray[]> coordinate = new ArrayList<LongArray[]>();
+		LongArray test = new LongArray();
+		
+		for (int i = (int)posX; i <= posX + radius; i++) {
+			for (int j = (int)posY; j <= posY + radius; j++) {
+				double dx = (posX - i);
+				double dy = (posY - j);
+				
+				
+				//double test = Math.abs(dx * dx + dy * dy);
 
 				if (Math.abs(dx * dx + dy * dy) < radius) {
 					Long[] axes = new Long[2];
-					axes[0] = (long)i;
-					axes[1] = (long)j;
+					test.addValue((long)i);
+					test.addValue((long)j);
+					/*
 					if(i < xDim && i > 0 && j < yDim && j > 0)
 					{
-					coordinate.add(axes);
+					coordinate.addAll(axes);
+					
+					test.addAll(coordinate);
 					}
+					*/
 
 				}
 			}
 		}
-		return coordinate;
+		return test;
 
 	}
+	public static LongArray transpose(LongArray axes)
+	{
+		Collection<Long> transposed = new ArrayList<Long>();
+		
+		long xCen = axes.getValue(0);
+		long yCen = axes.getValue(1);
+		
+		for(int i = 2; i < axes.size(); i=i+2)
+		{
+			long xPos = axes.getValue(i);
+			long yPos = axes.getValue(i+1); 
+			
+			long xDif = xPos - xCen;
+			long yDif = yPos - yCen;
+			
+			long xTran = xCen - xDif;
+			long yTran = yCen - yDif;
+			
+			transposed.add(xTran);
+			transposed.add(yTran);
+		}
+		
+		axes.addAll(transposed);
+		return axes;
+		
+	}
+	
 
 }
