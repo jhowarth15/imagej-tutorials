@@ -8,18 +8,24 @@
 
 import net.imagej.ImageJ;
 import net.imglib2.Point;
+import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessible;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.region.hypersphere.HyperSphere;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.outofbounds.OutOfBoundsConstantValueFactory;
+import net.imglib2.outofbounds.OutOfBoundsFactory;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
+import net.imglib2.view.Views;
+import net.imagej.ops.convolve.ConvolveNaive;
 
 /** How to use ImageJ Ops Convolution */
 public class ConvolutionOps {
 
 	public static void main(final String... args) throws Exception {
 		final ImageJ ij = new ImageJ();
-
-		int numDimensions = 2;
 
 		int[] size = new int[] { 200, 200 };
 
@@ -31,19 +37,42 @@ public class ConvolutionOps {
 		// show the image in a window
 		ij.ui().show("input", in);
 
-		double sigma = 5.0;
-
-		// create a Gaussian Kernel
-		Img<FloatType> kernel = (Img<FloatType>) ij.op().run("gausskernel",
-				new FloatType(), new ArrayImgFactory(), numDimensions, sigma,
-				null);
+		int[] kernelSize = new int[] { 3, 3 };
+		Img<FloatType> kernel = new ArrayImgFactory<FloatType>().create(
+				kernelSize, new FloatType());
+		RandomAccess<FloatType> kernelRa = kernel.randomAccess();
+		// long[] borderSize = new long[] {1, 1};
+		int[] k = new int[] { 1, -2, 1, 2, -4, 2, 1, -2, 1 }; // Second
+																// derivative
+																// filter
+		int h = 0;
+		for (int i = 0; i < 3; i++) {
+			for (int j = 0; j < 3; j++) {
+				kernelRa.setPosition(new Point(i, j));
+				kernelRa.get().set(k[h]);
+				h++;
+			}
+		}
 
 		// show the image in a window
 		ij.ui().show("kernel", kernel);
 
+		Img<FloatType> out = new ArrayImgFactory<FloatType>().create(in,
+				new FloatType());
+
+		OutOfBoundsFactory<FloatType, RandomAccessibleInterval<FloatType>> obf = new OutOfBoundsConstantValueFactory<FloatType, RandomAccessibleInterval<FloatType>>(
+				Util.getTypeFromInterval(in).createVariable());
+
+		// extend the input
+		RandomAccessibleInterval<FloatType> extendedIn = Views.interval(
+				Views.extend(in, obf), in);
+		
+		// extend the output
+		RandomAccessibleInterval<FloatType> extendedOut = Views.interval(
+				Views.extend(out, obf), out);
+
 		// convolve
-		Img<FloatType> out = (Img<FloatType>) ij.op().run("convolve", in,
-				kernel);
+		ij.op().run(ConvolveNaive.class, extendedOut, extendedIn, kernel);
 
 		// show the image in a window
 		ij.ui().show("convolved", out);
