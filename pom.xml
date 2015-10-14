@@ -51,6 +51,7 @@
 		<module>commands-with-preview</module>
 		<module>create-a-new-op</module>
 		<module>create-a-new-plugin-type</module>
+		<module>creating-services</module>
 		<module>custom-preprocessor-plugin</module>
 		<module>execute-commands</module>
 		<module>intro-to-imagej-api</module>
