@@ -21,6 +21,9 @@
 
 	<properties>
 		<main-class>WidgetDemo</main-class>
+		<enforcer.skip>true</enforcer.skip>
+		<scijava-common.version>LATEST</scijava-common.version>
+		<scijava-ui-swing.version>LATEST</scijava-ui-swing.version>
 	</properties>
 
 	<repositories>
@@ -34,6 +37,14 @@
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-common</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-ui-swing</artifactId>
 		</dependency>
 	</dependencies>
 
