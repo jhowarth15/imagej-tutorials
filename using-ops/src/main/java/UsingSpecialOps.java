@@ -24,7 +24,7 @@ import net.imglib2.type.numeric.integer.ByteType;
 import net.imglib2.type.numeric.real.DoubleType;
 
 /** How to use ImageJ Operations. */
-public class UsingOpTypes {
+public class UsingSpecialOps {
 	public static void main(final String... args) throws Exception {
 		ImageJ ij = new ImageJ();
 		LogService log = ij.log();
