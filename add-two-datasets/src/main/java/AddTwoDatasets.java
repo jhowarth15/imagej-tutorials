@@ -28,7 +28,6 @@ import org.scijava.ItemIO;
 import org.scijava.ItemVisibility;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
-import org.scijava.command.Previewable;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -38,7 +37,7 @@ import io.scif.services.DatasetIOService;
 /** Adds two datasets using the ImgLib2 framework. */
 @Plugin(type = Command.class, headless = true,
 	menuPath = "Tutorials>Add Two Datasets")
-public class AddTwoDatasets implements Command, Previewable {
+public class AddTwoDatasets implements Command {
 
 	@Parameter
 	private LogService log;
@@ -102,17 +101,6 @@ public class AddTwoDatasets implements Command, Previewable {
 		result1 = addRandomAccess(dataset1, dataset2);
 		result2 = addOpsSerial(dataset1, dataset2, new FloatType());
 		result3 = addOpsParallel(dataset1, dataset2, new FloatType());
-	}
-
-	@Override
-	public void cancel() {
-		log.info("Cancelled");
-	}
-
-	@Override
-	public void preview() {
-		log.info("previews AddTwoDatasets");
-		statusService.showStatus(header);
 	}
 
 	/**
