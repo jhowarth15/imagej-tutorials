@@ -20,6 +20,16 @@ import org.scijava.plugin.Plugin;
 
 import io.scif.services.DatasetIOService;
 
+import ij.IJ;
+import ij.ImagePlus;
+import ij.process.ImageProcessor;
+import ij.io.OpenDialog;
+import ij.plugin.PlugIn;
+import java.io.IOException;
+//import loci.formats.FormatException;
+//import loci.plugins.BF;
+import ij.plugin.FolderOpener;
+
 /**
  * This tutorial shows how to use ImageJ services to open an image and display
  * it to the user.
@@ -37,16 +47,20 @@ import io.scif.services.DatasetIOService;
  * See also the {@code LoadAndDisplayDataset} tutorial.
  * </p>
  */
-@Plugin(type = Command.class, menuPath = "Tutorials>Open Image")
+
+
+@Plugin(type = Command.class, menuPath = "Josh>Open Image")
 public class OpenImage implements Command {
+
+	//public ImagePlus openFolder(java.lang.String path);
 
 	/*
 	 * This first @Parameter is a core ImageJ service (and thus @Plugin). The
 	 * context will provide it automatically when this command is created.
 	 */
 
-	@Parameter
-	private DatasetIOService datasetIOService;
+//	@Parameter
+//	private DatasetIOService datasetIOService;
 
 	/*
 	 * In this command, we will be using functions that can throw exceptions.
@@ -54,8 +68,8 @@ public class OpenImage implements Command {
 	 * wrong. By using the LogService to do this, we let the framework decide
 	 * the best place to display thrown errors.
 	 */
-	@Parameter
-	private LogService logService;
+//	@Parameter
+//	private LogService logService;
 
 	/*
 	 * We need to know what image to open. So, the framework will ask the user
@@ -63,16 +77,16 @@ public class OpenImage implements Command {
 	 * "UI agnostic": it does not need to know the specific user interface
 	 * currently active.
 	 */
-	@Parameter
-	private File imageFile;
+//	@Parameter
+//	private File imageFile;
 
 	/*
 	 * This command will produce an image that will automatically be shown by
 	 * the framework. Again, this command is "UI agnostic": how the image is
 	 * shown is not specified here.
 	 */
-	@Parameter(type = ItemIO.OUTPUT)
-	private Dataset image;
+//	@Parameter(type = ItemIO.OUTPUT)
+//	private Dataset image;
 
 	/*
 	 * The run() method is where we do the actual 'work' of the command. In this
@@ -80,13 +94,19 @@ public class OpenImage implements Command {
 	 */
 	@Override
 	public void run() {
-		try {
-			image = datasetIOService.open(imageFile.getAbsolutePath());
-		}
-		catch (final IOException exc) {
-			// Use the LogService to report the error.
-			logService.error(exc);
-		}
+//		try {
+//			image = datasetIOService.open(imageFile.getAbsolutePath());
+//		}
+//		catch (final IOException exc) {
+//			// Use the LogService to report the error.
+//			logService.error(exc);
+//		}
+		
+		//MY CODE ADDITIONS:
+		FolderOpener fo = new FolderOpener( );
+		fo.openAsVirtualStack(true);
+		fo.run( null );
+		
 	}
 
 	/*
