@@ -88,7 +88,14 @@ import java.awt.event.WindowEvent;
 public class OpenImage extends PlugInFrame implements Command, ActionListener, Measurements {
 
 	OpenImage oi;
-
+	Panel panel;
+	static Frame instance;
+	ImagePlus imp = null;
+	ImageStack stack = null;
+	int numSlices,slice;
+	protected Label label1;
+	boolean doScaling = true;
+	
 	public void run(String arg) {
 		oi = new OpenImage();
 	}
@@ -101,23 +108,20 @@ public class OpenImage extends PlugInFrame implements Command, ActionListener, M
 		// TODO Auto-generated constructor stub
 		//OpenImage instance = this;
 		setLayout(new FlowLayout(FlowLayout.CENTER,10,10));
-		Panel panel = new Panel();
+		panel = new Panel();
 		panel.setLayout(new GridLayout(18,1,5,5));
 
+		addButton("<-", panel);
 		addButton("->", panel);
 		add(panel);
 		pack();
  		show();
- 		
- 		
- 		
-// 		IJ.showMessage("Select folder of PNG image files");
-
-		
-		
-//		FolderOpener fo = new FolderOpener( );
-//		fo.openAsVirtualStack(true);
-//		fo.run( null );
+ 			
+ 		//IJ.showMessage("Select folder of PNG image files");
+	
+		FolderOpener fo = new FolderOpener( );
+		fo.openAsVirtualStack(true);
+		fo.run( null );
 		
 
  		
@@ -178,10 +182,6 @@ public class OpenImage extends PlugInFrame implements Command, ActionListener, M
 
 		
 		
-		
-		
-		//System.out.println(fo.toString());
-		
 		//setLayout(new FlowLayout(FlowLayout.CENTER,5,5));
 		
 		
@@ -217,12 +217,41 @@ public class OpenImage extends PlugInFrame implements Command, ActionListener, M
 		panel.add(b);
 	}
 
-@Override
-public void actionPerformed(ActionEvent e) {
-	// TODO Auto-generated method stub
-	IJ.showMessage("J$");
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		// TODO Auto-generated method stub
+		
+		String label = e.getActionCommand();
+		if (label==null)
+			return;
+		
+		imp = WindowManager.getCurrentImage();
+		numSlices = imp.getStackSize();
+		slice = imp.getCurrentSlice();
+//		IJ.showMessage("numSlices: "+ numSlices);
+//		IJ.showMessage("slice: " + slice);
+//		IJ.showMessage("imp: " + imp);
+		
+		if (label.equals("->"))
+			fwd();
+		
+		if (label.equals("<-"))
+			bwd();
+	}
+	
+	private void fwd() {
+		// TODO Auto-generated method stub
+		imp.setSlice(slice+1);
+		imp.updateAndDraw();
 
-}
+	}
+	
+	private void bwd() {
+		// TODO Auto-generated method stub
+		imp.setSlice(slice-1);
+		imp.updateAndDraw();
+
+	}
 	
 
 }
