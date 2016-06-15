@@ -20,6 +20,7 @@ import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 import ij.process.TypeConverter;
+import net.imagej.ImageJ;
 
 import java.awt.Button;
 import java.awt.FileDialog;
@@ -717,4 +718,12 @@ class StackSorter extends PlugInFrame implements ActionListener, Measurements {
         if (showingLabels) imp.setSlice(current);
         return values;
     }
+    
+    public static void main(final String... args) throws Exception {
+		// Launch ImageJ as usual.
+		final ImageJ ij = net.imagej.Main.launch(args);
+
+		// Launch the "OpenImage" command.
+		ij.command().run(Stack_Sorter.class, true);
+	}
 }

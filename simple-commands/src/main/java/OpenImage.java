@@ -22,13 +22,48 @@ import io.scif.services.DatasetIOService;
 
 import ij.IJ;
 import ij.ImagePlus;
-import ij.process.ImageProcessor;
 import ij.io.OpenDialog;
 import ij.plugin.PlugIn;
 import java.io.IOException;
 //import loci.formats.FormatException;
 //import loci.plugins.BF;
 import ij.plugin.FolderOpener;
+import ij.ImageStack;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.gui.ImageWindow;
+import ij.gui.Roi;
+import ij.gui.Toolbar;
+import ij.io.Opener;
+import ij.measure.Calibration;
+import ij.measure.Measurements;
+import ij.plugin.filter.Analyzer;
+import ij.plugin.frame.PlugInFrame;
+import ij.process.Blitter;
+import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ImageStatistics;
+import ij.process.ShortProcessor;
+import ij.process.TypeConverter;
+
+import java.awt.Button;
+import java.awt.FileDialog;
+import java.awt.FlowLayout;
+import java.awt.Frame;
+import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.Label;
+import java.awt.Panel;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
 
 /**
  * This tutorial shows how to use ImageJ services to open an image and display
@@ -50,7 +85,43 @@ import ij.plugin.FolderOpener;
 
 
 @Plugin(type = Command.class, menuPath = "Josh>Open Image")
-public class OpenImage implements Command {
+public class OpenImage extends PlugInFrame implements Command, ActionListener, Measurements {
+
+	OpenImage oi;
+
+	public void run(String arg) {
+		oi = new OpenImage();
+	}
+	
+	/**
+	 * 
+	 */
+	public OpenImage() {
+		super("Open Image");
+		// TODO Auto-generated constructor stub
+		//OpenImage instance = this;
+		setLayout(new FlowLayout(FlowLayout.CENTER,10,10));
+		Panel panel = new Panel();
+		panel.setLayout(new GridLayout(18,1,5,5));
+
+		addButton("->", panel);
+		add(panel);
+		pack();
+ 		show();
+ 		
+ 		
+ 		
+// 		IJ.showMessage("Select folder of PNG image files");
+
+		
+		
+//		FolderOpener fo = new FolderOpener( );
+//		fo.openAsVirtualStack(true);
+//		fo.run( null );
+		
+
+ 		
+	}
 
 	//public ImagePlus openFolder(java.lang.String path);
 
@@ -88,6 +159,8 @@ public class OpenImage implements Command {
 //	@Parameter(type = ItemIO.OUTPUT)
 //	private Dataset image;
 
+/////////////////CLASS RUN FUNCTION///////////////////
+	
 	/*
 	 * The run() method is where we do the actual 'work' of the command. In this
 	 * case, it is fairly trivial because we are simply calling ImageJ Services.
@@ -102,12 +175,24 @@ public class OpenImage implements Command {
 //			logService.error(exc);
 //		}
 		
-		//MY CODE ADDITIONS:
-		FolderOpener fo = new FolderOpener( );
-		fo.openAsVirtualStack(true);
-		fo.run( null );
+
+		
+		
+		
+		
+		//System.out.println(fo.toString());
+		
+		//setLayout(new FlowLayout(FlowLayout.CENTER,5,5));
+		
+		
+		
+		
+		
 		
 	}
+	
+//////////////////////////MAIN////////////////////////////
+
 
 	/*
 	 * This main method is for convenience - so you can run this command
@@ -123,5 +208,21 @@ public class OpenImage implements Command {
 		// Launch the "OpenImage" command.
 		ij.command().run(OpenImage.class, true);
 	}
+	
+	
+//////////////METHODS//////////////////////////////////////	
+	void addButton(String label, Panel panel) {
+		Button b = new Button(label);
+		b.addActionListener(this);
+		panel.add(b);
+	}
+
+@Override
+public void actionPerformed(ActionEvent e) {
+	// TODO Auto-generated method stub
+	IJ.showMessage("J$");
+
+}
+	
 
 }
