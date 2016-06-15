@@ -31,7 +31,9 @@ import ij.plugin.FolderOpener;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
+import ij.gui.PlotWindow;
 import ij.gui.Roi;
 import ij.gui.Toolbar;
 import ij.io.Opener;
@@ -48,6 +50,7 @@ import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 import ij.process.TypeConverter;
 
+import java.awt.event.MouseListener;
 import java.awt.Button;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
@@ -63,7 +66,10 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
+
+import java.util.*;
 
 /**
  * This tutorial shows how to use ImageJ services to open an image and display
@@ -85,16 +91,19 @@ import java.awt.event.WindowEvent;
 
 
 @Plugin(type = Command.class, menuPath = "Josh>Open Image")
-public class OpenImage extends PlugInFrame implements Command, ActionListener, Measurements {
+public class OpenImage extends PlugInFrame implements Command, MouseListener, ActionListener, Measurements {
 
 	OpenImage oi;
 	Panel panel;
-	static Frame instance;
+	Frame instance;
 	ImagePlus imp = null;
 	ImageStack stack = null;
+	ImageCanvas canvas = null;
 	int numSlices,slice;
 	protected Label label1;
 	boolean doScaling = true;
+	
+	List<int[]> positives = new ArrayList<int[]>();
 	
 	public void run(String arg) {
 		oi = new OpenImage();
@@ -107,6 +116,7 @@ public class OpenImage extends PlugInFrame implements Command, ActionListener, M
 		super("Open Image");
 		// TODO Auto-generated constructor stub
 		//OpenImage instance = this;
+		
 		setLayout(new FlowLayout(FlowLayout.CENTER,10,10));
 		panel = new Panel();
 		panel.setLayout(new GridLayout(18,1,5,5));
@@ -117,12 +127,13 @@ public class OpenImage extends PlugInFrame implements Command, ActionListener, M
 		pack();
  		show();
  			
- 		//IJ.showMessage("Select folder of PNG image files");
+ 		IJ.showMessage("Select folder of PNG image files");
 	
 		FolderOpener fo = new FolderOpener( );
 		fo.openAsVirtualStack(true);
 		fo.run( null );
 		
+		this.imp = WindowManager.getCurrentImage();
 
  		
 	}
@@ -180,7 +191,9 @@ public class OpenImage extends PlugInFrame implements Command, ActionListener, M
 //		}
 		
 
-		
+		ImageWindow win = imp.getWindow();
+		canvas = win.getCanvas();
+		canvas.addMouseListener(this);
 		
 		//setLayout(new FlowLayout(FlowLayout.CENTER,5,5));
 		
@@ -239,6 +252,7 @@ public class OpenImage extends PlugInFrame implements Command, ActionListener, M
 			bwd();
 	}
 	
+	
 	private void fwd() {
 		// TODO Auto-generated method stub
 		imp.setSlice(slice+1);
@@ -252,6 +266,58 @@ public class OpenImage extends PlugInFrame implements Command, ActionListener, M
 		imp.updateAndDraw();
 
 	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		// TODO Auto-generated method stub
+		int x = e.getX();
+		int y = e.getY();
+		int offscreenX = canvas.offScreenX(x);
+		int offscreenY = canvas.offScreenY(y);
+		//IJ.showMessage("mousePressed: "+offscreenX+","+offscreenY);
+		double doubX = offscreenX/1.0;
+		double doubY = offscreenY/1.0;
+		
+		//instance.addLabel( doubX, doubY, "[]");
+		 
+		positives.add(new int[] { offscreenX, offscreenY });
+		System.out.println("Positives:");
+		for (int[] pos : positives) {
+	        System.out.print(Arrays.toString(pos) + " ");
+	    }
+		System.out.println("");
+		//System.out.println(positives.get(1)[1]);
+	}
 	
+	public static int[][] append(int[][] a, int[][] b) {
+        int[][] result = new int[a.length + b.length][];
+        System.arraycopy(a, 0, result, 0, a.length);
+        System.arraycopy(b, 0, result, a.length, b.length);
+        return result;
+    }
 
 }
