@@ -8,6 +8,10 @@
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
 
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
@@ -17,6 +21,8 @@ import org.scijava.command.Command;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+
+import com.github.kevinsawicki.http.HttpRequest;
 
 import io.scif.services.DatasetIOService;
 
@@ -36,6 +42,7 @@ import ij.gui.ImageWindow;
 import ij.gui.PlotWindow;
 import ij.gui.Roi;
 import ij.gui.Toolbar;
+import ij.gui.PolygonRoi;
 import ij.io.Opener;
 import ij.measure.Calibration;
 import ij.measure.Measurements;
@@ -52,6 +59,7 @@ import ij.process.TypeConverter;
 
 import java.awt.event.MouseListener;
 import java.awt.Button;
+import java.awt.Desktop;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
 import java.awt.Frame;
@@ -99,6 +107,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	ImagePlus imp = null;
 	ImageStack stack = null;
 	ImageCanvas canvas = null;
+	ij.gui.PolygonRoi annotations = null;
 	int numSlices,slice;
 	protected Label label1;
 	boolean doScaling = true;
@@ -123,6 +132,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 
 		addButton("<-", panel);
 		addButton("->", panel);
+		addButton("Train", panel);
 		add(panel);
 		pack();
  		show();
@@ -193,10 +203,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 
 		ImageWindow win = imp.getWindow();
 		canvas = win.getCanvas();
-		canvas.addMouseListener(this);
-		
-		//setLayout(new FlowLayout(FlowLayout.CENTER,5,5));
-		
+		canvas.addMouseListener(this);		
 		
 		
 		
@@ -250,6 +257,14 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		
 		if (label.equals("<-"))
 			bwd();
+		
+		if (label.equals("Train"))
+			try {
+				train();
+			} catch (IOException | URISyntaxException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 	}
 	
 	
@@ -266,6 +281,21 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		imp.updateAndDraw();
 
 	}
+	
+	private void train() throws IOException, URISyntaxException {
+		// TODO Auto-generated method stub
+		int data = 8;
+//		URI uri = new URI("http://localhost:8080/" + data);
+//		Desktop dt = Desktop.getDesktop();
+//		dt.browse(uri.resolve(uri));
+
+		String response = HttpRequest.get("http://localhost:8080/" + data)
+		        .accept("application/json")
+		        .body();
+		System.out.println("Response was: " + response);
+		
+	}
+	
 
 	@Override
 	public void mousePressed(MouseEvent e) {
@@ -302,8 +332,9 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		double doubX = offscreenX/1.0;
 		double doubY = offscreenY/1.0;
 		
-		//instance.addLabel( doubX, doubY, "[]");
-		 
+		//annotations.addPoint(offscreenX, offscreenY);
+		
+		
 		positives.add(new int[] { offscreenX, offscreenY });
 		System.out.println("Positives:");
 		for (int[] pos : positives) {
