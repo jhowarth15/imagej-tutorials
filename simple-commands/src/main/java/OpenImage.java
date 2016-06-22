@@ -16,6 +16,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.ByteBuffer;
+import java.io.File;
 
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
@@ -60,6 +61,7 @@ import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 import ij.process.TypeConverter;
+import ij.io.DirectoryChooser;
 
 import java.awt.event.MouseListener;
 import java.awt.Button;
@@ -157,16 +159,44 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		add(panel);
 		pack();
  		show();
- 			
-// 		IJ.showMessage("Select folder of PNG image files");
-//	
-//		FolderOpener fo = new FolderOpener( );
-//		fo.openAsVirtualStack(true);
-//		fo.run( null );
-//		
-//		this.imp = WindowManager.getCurrentImage();
+ 		
+		DirectoryChooser dc = new DirectoryChooser("Choose a folder");  
+		String folder = dc.getDirectory();
+		System.out.println("dir: " + folder);
+ 		
+
+		FolderOpener fo = new FolderOpener();
+
 		
-		PostFile();
+		this.imp = fo.openFolder(folder);
+		this.stack = imp.getImageStack();
+		
+		ImageWindow win = new ImageWindow(imp);
+		
+		System.out.println("WIndow got: " + imp.getWindow());
+		imp.draw();
+
+		File dir = new File(folder);
+		File[] directoryListing = dir.listFiles();
+		if (directoryListing != null) {
+		    for (File child : directoryListing) {
+		      // Do something with child
+		    	String file_dir = child.toString();
+		    	System.out.println(file_dir);
+		    	System.out.println("");
+		    	if (file_dir.endsWith(".png"))
+		    	{
+		    		PostFile(file_dir, "127.0.0.1", 9999);
+		    		try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+		    	}
+		    }
+		}    
+		
 
  		
 	}
@@ -271,9 +301,10 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		imp = WindowManager.getCurrentImage();
 		numSlices = imp.getStackSize();
 		slice = imp.getCurrentSlice();
-//		IJ.showMessage("numSlices: "+ numSlices);
-//		IJ.showMessage("slice: " + slice);
-//		IJ.showMessage("imp: " + imp);
+
+		System.out.println("numSlices: "+ numSlices);
+		System.out.println("slice: " + slice);
+		System.out.println("imp: " + imp);
 		
 		if (label.equals("->"))
 			fwd();
@@ -374,18 +405,15 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
         return result;
     }
 	
-	public static void PostFile () {
+	//Uploads an image file to the python server
+	public static void PostFile (String directory, String IP_ADDRESS, int PORT_NO) {
 		
-		String directory = "/Users/joshuahowarth/dev/celldetector/SmartAnnotatorV01/png_rgb/frame_0001.png";// a valid directory of a picture.
         BufferedImage bufferedImage = null;
         try {
             bufferedImage = ImageIO.read(new File(directory));
         } catch (IOException err) {
             err.printStackTrace();
         }
-		
-        String IP_ADDRESS = "127.0.0.1";
-        int PORT_NO = 9999;
         
         try {
         	Socket socket = new Socket(IP_ADDRESS, PORT_NO);
@@ -402,68 +430,6 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
             e1.printStackTrace();
         }
 		
-//		HttpClient httpclient = new DefaultHttpClient();
-//		
-//		httpclient.getConnectionManager().shutdown();
-//		
-//	    httpclient.getParams().setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
-//
-//	    HttpPost httppost = new HttpPost("http://localhost:8080/upload");
-//	    File file = new File("/Users/joshuahowarth/dev/celldetector/SmartAnnotatorV01/png_rgb/frame_0001.png");
-//
-//	    MultipartEntity mpEntity = new MultipartEntity();
-//	    ContentBody cbFile = new FileBody(file, "image/jpeg");
-//	    mpEntity.addPart("userfile", cbFile);
-//
-//
-//	    httppost.setEntity(mpEntity);
-//	    System.out.println("executing request " + httppost.getRequestLine());
-//	    
-//	    try {
-//			httpclient.execute(httppost);
-//		} catch (ClientProtocolException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-			////////////
-		
-//	    HttpResponse response = null;
-//		try {
-//			response = httpclient.execute(httppost);
-//		} catch (ClientProtocolException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//	    HttpEntity resEntity = response.getEntity();
-//
-//	    System.out.println(response.getStatusLine());
-//	    if (resEntity != null) {
-//	      try {
-//			System.out.println(EntityUtils.toString(resEntity));
-//		} catch (ParseException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//	    }
-//	    if (resEntity != null) {
-//	      try {
-//			resEntity.consumeContent();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//	    }
-
-//	    httpclient.getConnectionManager().shutdown();
 	}
 
 }
