@@ -41,5 +41,11 @@
 		  <artifactId>http-request</artifactId>
 		  <version>6.0</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpmime -->
+		<dependency>
+		    <groupId>org.apache.httpcomponents</groupId>
+		    <artifactId>httpmime</artifactId>
+		    <version>4.3.6</version>
+		</dependency>
 	</dependencies>
 </project>

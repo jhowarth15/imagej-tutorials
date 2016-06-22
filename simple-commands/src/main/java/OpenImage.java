@@ -6,12 +6,16 @@
  *     http://creativecommons.org/publicdomain/zero/1.0/
  */
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.ByteBuffer;
 
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
@@ -76,8 +80,25 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
-
+import java.awt.image.BufferedImage;
 import java.util.*;
+
+import javax.imageio.ImageIO;
+
+import java.io.File;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpVersion;
+import org.apache.http.ParseException;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.content.ContentBody;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.CoreProtocolPNames;
+import org.apache.http.util.EntityUtils;
 
 /**
  * This tutorial shows how to use ImageJ services to open an image and display
@@ -137,13 +158,15 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		pack();
  		show();
  			
- 		IJ.showMessage("Select folder of PNG image files");
-	
-		FolderOpener fo = new FolderOpener( );
-		fo.openAsVirtualStack(true);
-		fo.run( null );
+// 		IJ.showMessage("Select folder of PNG image files");
+//	
+//		FolderOpener fo = new FolderOpener( );
+//		fo.openAsVirtualStack(true);
+//		fo.run( null );
+//		
+//		this.imp = WindowManager.getCurrentImage();
 		
-		this.imp = WindowManager.getCurrentImage();
+		PostFile();
 
  		
 	}
@@ -201,9 +224,9 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 //		}
 		
 
-		ImageWindow win = imp.getWindow();
-		canvas = win.getCanvas();
-		canvas.addMouseListener(this);		
+//		ImageWindow win = imp.getWindow();
+//		canvas = win.getCanvas();
+//		canvas.addMouseListener(this);		
 		
 		
 		
@@ -350,5 +373,97 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
         System.arraycopy(b, 0, result, a.length, b.length);
         return result;
     }
+	
+	public static void PostFile () {
+		
+		String directory = "/Users/joshuahowarth/dev/celldetector/SmartAnnotatorV01/png_rgb/frame_0001.png";// a valid directory of a picture.
+        BufferedImage bufferedImage = null;
+        try {
+            bufferedImage = ImageIO.read(new File(directory));
+        } catch (IOException err) {
+            err.printStackTrace();
+        }
+		
+        String IP_ADDRESS = "127.0.0.1";
+        int PORT_NO = 9999;
+        
+        try {
+        	Socket socket = new Socket(IP_ADDRESS, PORT_NO);
+            OutputStream outputStream = socket.getOutputStream();
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            ImageIO.write(bufferedImage, "png", byteArrayOutputStream);
+            // get the size of image
+            byte[] size = ByteBuffer.allocate(4).putInt(byteArrayOutputStream.size()).array();
+            outputStream.write(size);
+            outputStream.write(byteArrayOutputStream.toByteArray());
+            outputStream.flush();
+        } catch (IOException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+		
+//		HttpClient httpclient = new DefaultHttpClient();
+//		
+//		httpclient.getConnectionManager().shutdown();
+//		
+//	    httpclient.getParams().setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
+//
+//	    HttpPost httppost = new HttpPost("http://localhost:8080/upload");
+//	    File file = new File("/Users/joshuahowarth/dev/celldetector/SmartAnnotatorV01/png_rgb/frame_0001.png");
+//
+//	    MultipartEntity mpEntity = new MultipartEntity();
+//	    ContentBody cbFile = new FileBody(file, "image/jpeg");
+//	    mpEntity.addPart("userfile", cbFile);
+//
+//
+//	    httppost.setEntity(mpEntity);
+//	    System.out.println("executing request " + httppost.getRequestLine());
+//	    
+//	    try {
+//			httpclient.execute(httppost);
+//		} catch (ClientProtocolException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+			////////////
+		
+//	    HttpResponse response = null;
+//		try {
+//			response = httpclient.execute(httppost);
+//		} catch (ClientProtocolException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//	    HttpEntity resEntity = response.getEntity();
+//
+//	    System.out.println(response.getStatusLine());
+//	    if (resEntity != null) {
+//	      try {
+//			System.out.println(EntityUtils.toString(resEntity));
+//		} catch (ParseException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//	    }
+//	    if (resEntity != null) {
+//	      try {
+//			resEntity.consumeContent();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//	    }
+
+//	    httpclient.getConnectionManager().shutdown();
+	}
 
 }
