@@ -152,6 +152,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		setLayout(new FlowLayout(FlowLayout.CENTER,10,10));
 		panel = new Panel();
 		panel.setLayout(new GridLayout(18,1,5,5));
+		
 
 		addButton("<-", panel);
 		addButton("->", panel);
@@ -173,7 +174,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		
 		ImageWindow win = new ImageWindow(imp);
 		
-		System.out.println("WIndow got: " + imp.getWindow());
+		//System.out.println("WIndow got: " + imp.getWindow());
 		imp.draw();
 
 		File dir = new File(folder);
@@ -182,8 +183,8 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		    for (File child : directoryListing) {
 		      // Do something with child
 		    	String file_dir = child.toString();
-		    	System.out.println(file_dir);
-		    	System.out.println("");
+		    	//System.out.println(file_dir);
+		    	//System.out.println("");
 		    	if (file_dir.endsWith(".png"))
 		    	{
 		    		PostFile(file_dir, "127.0.0.1", 9999);
@@ -191,7 +192,8 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		    }
 		}    
 		
-
+		canvas = imp.getCanvas();
+		canvas.addMouseListener(this);
  		
 	}
 
@@ -296,9 +298,9 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		numSlices = imp.getStackSize();
 		slice = imp.getCurrentSlice();
 
-		System.out.println("numSlices: "+ numSlices);
-		System.out.println("slice: " + slice);
-		System.out.println("imp: " + imp);
+//		System.out.println("numSlices: "+ numSlices);
+//		System.out.println("slice: " + slice);
+//		System.out.println("imp: " + imp);
 		
 		if (label.equals("->"))
 			fwd();
@@ -374,9 +376,10 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		// TODO Auto-generated method stub
 		int x = e.getX();
 		int y = e.getY();
+		
 		int offscreenX = canvas.offScreenX(x);
 		int offscreenY = canvas.offScreenY(y);
-		//IJ.showMessage("mousePressed: "+offscreenX+","+offscreenY);
+		IJ.showMessage("mousePressed: "+offscreenX+","+offscreenY);
 		double doubX = offscreenX/1.0;
 		double doubY = offscreenY/1.0;
 		
