@@ -136,6 +136,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	boolean doScaling = true;
 	
 	List<int[]> positives = new ArrayList<int[]>();
+	List<int[]> negatives = new ArrayList<int[]>();
 	
 	public void run(String arg) {
 		oi = new OpenImage();
@@ -377,6 +378,9 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	public void mouseClicked(MouseEvent e) {
 		// TODO Auto-generated method stub
 		
+		//IJ.showMessage("e: "+e.getModifiersEx());
+		int clicked = e.getModifiersEx();
+		
 		imp = WindowManager.getCurrentImage();
 		ImageProcessor improc = imp.getProcessor();
 		
@@ -386,17 +390,31 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		int offscreenX = canvas.offScreenX(x);
 		int offscreenY = canvas.offScreenY(y);
 //		IJ.showMessage("mousePressed: "+offscreenX+","+offscreenY);
-		double doubX = offscreenX/1.0;
-		double doubY = offscreenY/1.0;
 		
-		improc.setColor(java.awt.Color.white);
-		improc.drawRect(x-5,y-5,10,10);
+		//Add positive annotation
+		if (clicked == 0){
+			improc.setColor(java.awt.Color.white);
+			improc.drawRect(x-5,y-5,10,10);
+			
+			positives.add(new int[] { offscreenX, offscreenY });
+			System.out.println("Positives:");
+			for (int[] pos : positives) {
+		        System.out.print(Arrays.toString(pos) + " ");
+		    }
+		}
 		
-		positives.add(new int[] { offscreenX, offscreenY });
-		System.out.println("Positives:");
-		for (int[] pos : positives) {
-	        System.out.print(Arrays.toString(pos) + " ");
-	    }
+		//Add negative annotation - hold shift and left click
+		if (clicked == 64){
+			improc.setColor(java.awt.Color.red);
+			improc.drawRect(x-5,y-5,10,10);
+			
+			negatives.add(new int[] { offscreenX, offscreenY });
+			System.out.println("Negatives:");
+			for (int[] neg : negatives) {
+		        System.out.print(Arrays.toString(neg) + " ");
+		    }
+		}
+		
 		System.out.println("");
 		//System.out.println(positives.get(1)[1]);
 	}
