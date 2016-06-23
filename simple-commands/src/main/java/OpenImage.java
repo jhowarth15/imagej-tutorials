@@ -194,6 +194,8 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		
 		canvas = imp.getCanvas();
 		canvas.addMouseListener(this);
+		
+		
  		
 	}
 
@@ -374,17 +376,21 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		// TODO Auto-generated method stub
+		
+		imp = WindowManager.getCurrentImage();
+		ImageProcessor improc = imp.getProcessor();
+		
 		int x = e.getX();
 		int y = e.getY();
 		
 		int offscreenX = canvas.offScreenX(x);
 		int offscreenY = canvas.offScreenY(y);
-		IJ.showMessage("mousePressed: "+offscreenX+","+offscreenY);
+//		IJ.showMessage("mousePressed: "+offscreenX+","+offscreenY);
 		double doubX = offscreenX/1.0;
 		double doubY = offscreenY/1.0;
 		
-		//annotations.addPoint(offscreenX, offscreenY);
-		
+		improc.setColor(java.awt.Color.white);
+		improc.drawRect(x-5,y-5,10,10);
 		
 		positives.add(new int[] { offscreenX, offscreenY });
 		System.out.println("Positives:");
