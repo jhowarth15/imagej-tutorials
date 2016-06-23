@@ -187,12 +187,6 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		    	if (file_dir.endsWith(".png"))
 		    	{
 		    		PostFile(file_dir, "127.0.0.1", 9999);
-		    		try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
 		    	}
 		    }
 		}    
