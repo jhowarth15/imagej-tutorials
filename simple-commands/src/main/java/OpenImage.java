@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.StringWriter;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -17,6 +18,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.io.File;
+
 
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
@@ -94,6 +96,7 @@ import org.apache.http.HttpVersion;
 import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.ContentBody;
@@ -101,6 +104,18 @@ import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.util.EntityUtils;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 /**
  * This tutorial shows how to use ImageJ services to open an image and display
@@ -137,6 +152,8 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	
 	List<int[]> positives = new ArrayList<int[]>();
 	List<int[]> negatives = new ArrayList<int[]>();
+	
+	JSONObject obj = new JSONObject();
 	
 	public void run(String arg) {
 		oi = new OpenImage();
@@ -342,10 +359,22 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 //		Desktop dt = Desktop.getDesktop();
 //		dt.browse(uri.resolve(uri));
 
-		String response = HttpRequest.get("http://localhost:8080/" + data)
-		        .accept("application/json")
-		        .body();
-		System.out.println("Response was: " + response);
+//		String response = HttpRequest.get("http://localhost:8080/" + data)
+//		        .accept("application/json")
+//		        .body();
+//		System.out.println("Response was: " + response);
+		
+		
+	      obj.put("pos", positives);
+	      obj.put("neg", negatives);
+
+	      StringWriter out = new StringWriter();
+	      obj.writeJSONString(out);
+	      
+	      String jsonText = "[{\"foo\": [\"bar\", \"black\"]},{\"fiz\": \"biz\"}]";//"data="+out.toString(); //////ISSUES HERE/////////
+	      System.out.print(jsonText);
+	      
+	      http("http://localhost:8080/", jsonText);
 		
 	}
 	
@@ -452,5 +481,48 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
         }
 		
 	}
+	
+	public HttpResponse http(String url, String body) {
 
+        try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
+            
+        	HttpPost request = new HttpPost(url);
+            StringEntity params = new StringEntity(body);
+            request.addHeader("content-type", "application/json");
+            request.setEntity(params);
+            //HttpResponse result = httpClient.execute(request);
+            
+            ResponseHandler<String> responseHandler = new BasicResponseHandler();
+            String responseBody = httpClient.execute(request, responseHandler);
+            //JSONObject response = new JSONObject(responseBody);
+
+            //String json = EntityUtils.toString(result.getEntity(), "UTF-8");
+            System.out.println("RETURNED: " + responseBody);
+            
+//            try {
+//                JSONParser parser = new JSONParser();
+//                Object resultObject = parser.parse(json);
+//
+//                if (resultObject instanceof JSONArray) {
+//                    JSONArray array=(JSONArray)resultObject;
+//                    for (Object object : array) {
+//                        JSONObject obj =(JSONObject)object;
+//                        System.out.println("RETURNED: " +obj.get("pos"));
+//                        System.out.println("RETURNED: " +obj.get("neg"));
+//                    }
+//
+//                }else if (resultObject instanceof JSONObject) {
+//                    JSONObject obj =(JSONObject)resultObject;
+//                    System.out.println("RETURNED: " +obj.get("pos"));
+//                    System.out.println("RETURNED: " +obj.get("neg"));
+//                }
+//
+//            } catch (Exception e) {
+//                // TODO: handle exception
+//            }
+
+        } catch (IOException ex) {
+        }
+        return null;
+    }
 }
