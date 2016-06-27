@@ -364,17 +364,35 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 //		        .body();
 //		System.out.println("Response was: " + response);
 		
-		
-	      obj.put("pos", positives);
-	      obj.put("neg", negatives);
-
-	      StringWriter out = new StringWriter();
-	      obj.writeJSONString(out);
+			//Parse the positives and negatives list into Json string and post to URL//
+	      int  count = 0;
+	      String annotJson = "[{\"pos\": [";
+	      for (int[] pos : positives) {
+		        annotJson = annotJson + "\"" + Arrays.toString(pos) + "\", ";
+		        count++;
+		    }
+	      //Remove last comma
+	      if (count>0)
+	      {
+	    	  annotJson = annotJson.substring(0, annotJson.length()-2);
+	      }
+	      count = 0;
+	      annotJson = annotJson + "]},{\"neg\": [";
+	      for (int[] neg : negatives) {
+		        annotJson = annotJson + "\"" + Arrays.toString(neg) + "\", ";
+		        count++;
+		    }
+	      //Remove last comma
+	      if (count>0)
+	      {
+	    	  annotJson = annotJson.substring(0, annotJson.length()-2);
+	      }
+	      annotJson = annotJson + "]}]";
 	      
-	      String jsonText = "[{\"foo\": [\"bar\", \"black\"]},{\"fiz\": \"biz\"}]";//"data="+out.toString(); //////ISSUES HERE/////////
-	      System.out.print(jsonText);
+	      //String jsonText = "[{\"foo\": [\"bar\", \"black\"]},{\"fiz\": \"biz\"}]";  //"data="+out.toString(); //////ISSUES HERE/////////
+	      System.out.print(annotJson);
 	      
-	      http("http://localhost:8080/", jsonText);
+	      http("http://localhost:8080/", annotJson);
 		
 	}
 	
