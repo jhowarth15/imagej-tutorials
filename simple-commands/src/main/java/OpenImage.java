@@ -149,9 +149,11 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	int numSlices,slice;
 	protected Label label1;
 	boolean doScaling = true;
+	ImageProcessor improc = null;
 	
 	List<int[]> positives = new ArrayList<int[]>();
 	List<int[]> negatives = new ArrayList<int[]>();
+	List<int[]> detections = new ArrayList<int[]>();
 	
 	JSONObject obj = new JSONObject();
 	
@@ -429,7 +431,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		int clicked = e.getModifiersEx();
 		
 		imp = WindowManager.getCurrentImage();
-		ImageProcessor improc = imp.getProcessor();
+		improc = imp.getProcessor();
 		
 		int x = e.getX();
 		int y = e.getY();
@@ -515,8 +517,36 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
             //JSONObject response = new JSONObject(responseBody);
 
             //String json = EntityUtils.toString(result.getEntity(), "UTF-8");
-            System.out.println("RETURNED: " + responseBody);
+            //System.out.println("RETURNED: " + responseBody);
             
+            //Parse response into list of detections
+            String[] items = responseBody.replaceAll("\\[", "").replaceAll("\\]", "").replaceAll(" ", "").split(",");
+            
+            int i = 0;
+            while (i < items.length){
+                //System.out.println(items[i]);
+                detections.add(new int[] { Integer.parseInt(items[i]), Integer.parseInt(items[i+1] )});
+                i = i+2;
+            }
+            
+            int no_dets = 0;
+            System.out.print("Parsed detections::");
+            for (int[] det : detections) {
+    		        System.out.print(Arrays.toString(det) + " ");
+    		        no_dets++;
+    		    }
+            
+			//Annotate the fiji image with detections
+            imp = WindowManager.getCurrentImage();
+    		improc = imp.getProcessor();
+            improc.setColor(java.awt.Color.blue);		
+            
+            for (int count = 0; count < no_dets; count++){
+            	int x = detections.get(count)[0];
+            	int y = detections.get(count)[1];
+                improc.drawRect(x-5,y-5,10,10);
+            }
+                        
 //            try {
 //                JSONParser parser = new JSONParser();
 //                Object resultObject = parser.parse(json);
