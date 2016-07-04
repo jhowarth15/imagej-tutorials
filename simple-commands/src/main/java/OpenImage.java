@@ -90,6 +90,8 @@ import java.util.*;
 import javax.imageio.ImageIO;
 
 import java.io.File;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
@@ -370,7 +372,9 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	      int  count = 0;
 	      String annotJson = "[{\"pos\": [";
 	      for (int[] pos : positives) {
-		        annotJson = annotJson + "\"" + Arrays.toString(pos) + "\", ";
+	    	  	String pos_x = String.format("%03d", pos[0]);
+	    	  	String pos_y = String.format("%03d", pos[1]);
+		        annotJson = annotJson + "\"[" + pos_x + ", " + pos_y + "]\", ";
 		        count++;
 		    }
 	      //Remove last comma
@@ -381,7 +385,9 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	      count = 0;
 	      annotJson = annotJson + "]},{\"neg\": [";
 	      for (int[] neg : negatives) {
-		        annotJson = annotJson + "\"" + Arrays.toString(neg) + "\", ";
+	    	  	String neg_x = String.format("%03d", neg[0]);
+	    	  	String neg_y = String.format("%03d", neg[1]);
+		        annotJson = annotJson + "\"[" + neg_x + ", " + neg_y + "]\", ";
 		        count++;
 		    }
 	      //Remove last comma
