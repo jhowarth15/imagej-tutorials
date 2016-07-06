@@ -67,9 +67,11 @@ import ij.io.DirectoryChooser;
 
 import java.awt.event.MouseListener;
 import java.awt.Button;
+import java.awt.ComponentOrientation;
 import java.awt.Desktop;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.Image;
@@ -88,6 +90,10 @@ import java.awt.image.BufferedImage;
 import java.util.*;
 
 import javax.imageio.ImageIO;
+import javax.swing.JLabel;
+import javax.swing.JSlider;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import java.io.File;
 
@@ -138,7 +144,7 @@ import org.json.simple.parser.JSONParser;
  */
 
 
-@Plugin(type = Command.class, menuPath = "Josh>Open Image")
+@Plugin(type = Command.class, menuPath = "Josh>Cell Detector")
 public class OpenImage extends PlugInFrame implements Command, MouseListener, ActionListener, Measurements {
 
 	OpenImage oi;
@@ -152,10 +158,12 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	protected Label label1;
 	boolean doScaling = true;
 	ImageProcessor improc = null;
+	static ImagePlus original = null;
 	
 	List<int[]> positives = new ArrayList<int[]>();
 	List<int[]> negatives = new ArrayList<int[]>();
 	List<int[]> detections = new ArrayList<int[]>();
+	int p_value = 50;
 	
 	JSONObject obj = new JSONObject();
 	
@@ -171,18 +179,54 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		// TODO Auto-generated constructor stub
 		//OpenImage instance = this;
 		
-		setLayout(new FlowLayout(FlowLayout.CENTER,10,10));
+		setLayout(new FlowLayout());
 		panel = new Panel();
-		panel.setLayout(new GridLayout(18,1,5,5));
+		panel.setLayout(new GridLayout());
 		
 
 		addButton("<-", panel);
 		addButton("->", panel);
 		addButton("Train", panel);
+		
+ 		//Create the slider
+ 		JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
+ 		slider.addChangeListener(new ChangeListener(){
+ 		    public void stateChanged(ChangeEvent e) {
+ 		        JSlider source = (JSlider)e.getSource();
+ 		        if (!source.getValueIsAdjusting()) {
+ 		            p_value = (int)source.getValue();
+ 		            //System.out.print(p_value);
+ 		           drawAnnotations (p_value);
+ 		        }    
+ 		    }
+ 		});
+
+ 		//slider.addChangeListener(this);
+ 		slider.setMajorTickSpacing(10);
+ 		slider.setPaintTicks(true);
+
+ 		//Create the label table
+ 		Hashtable<Integer, JLabel> labelTable = new Hashtable<Integer, JLabel>();
+ 		labelTable.put( new Integer( 0 ), new JLabel("0") );
+ 		labelTable.put( new Integer( 50 ), new JLabel("Probability (%)") );
+ 		labelTable.put( new Integer( 100 ), new JLabel("100") );
+ 		slider.setLabelTable( labelTable );
+
+ 		slider.setPaintLabels(true);
+ 		
 		add(panel);
+		
+		add(slider);
+		
+		setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
+		
 		pack();
  		show();
  		
+
+ 		
+ 		
+ 		//Open image folder
 		DirectoryChooser dc = new DirectoryChooser("Choose a folder");  
 		String folder = dc.getDirectory();
 		System.out.println("dir: " + folder);
@@ -192,6 +236,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 
 		
 		this.imp = fo.openFolder(folder);
+		this.original = imp;
 		this.stack = imp.getImageStack();
 		
 		ImageWindow win = new ImageWindow(imp);
@@ -531,52 +576,42 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
             int i = 0;
             while (i < items.length){
                 //System.out.println(items[i]);
-                detections.add(new int[] { Integer.parseInt(items[i]), Integer.parseInt(items[i+1] )});
-                i = i+2;
+                detections.add(new int[] { Integer.parseInt(items[i]), Integer.parseInt(items[i+1] ), Integer.parseInt(items[i+2] )});
+                i = i+3;
             }
             
-            int no_dets = 0;
             System.out.print("Parsed detections::");
             for (int[] det : detections) {
     		        System.out.print(Arrays.toString(det) + " ");
-    		        no_dets++;
     		    }
-            
-			//Annotate the fiji image with detections
-            imp = WindowManager.getCurrentImage();
-    		improc = imp.getProcessor();
-            improc.setColor(java.awt.Color.blue);		
-            
-            for (int count = 0; count < no_dets; count++){
-            	int x = detections.get(count)[0];
-            	int y = detections.get(count)[1];
-                improc.drawRect(x-5,y-5,10,10);
-            }
-                        
-//            try {
-//                JSONParser parser = new JSONParser();
-//                Object resultObject = parser.parse(json);
-//
-//                if (resultObject instanceof JSONArray) {
-//                    JSONArray array=(JSONArray)resultObject;
-//                    for (Object object : array) {
-//                        JSONObject obj =(JSONObject)object;
-//                        System.out.println("RETURNED: " +obj.get("pos"));
-//                        System.out.println("RETURNED: " +obj.get("neg"));
-//                    }
-//
-//                }else if (resultObject instanceof JSONObject) {
-//                    JSONObject obj =(JSONObject)resultObject;
-//                    System.out.println("RETURNED: " +obj.get("pos"));
-//                    System.out.println("RETURNED: " +obj.get("neg"));
-//                }
-//
-//            } catch (Exception e) {
-//                // TODO: handle exception
-//            }
 
+            drawAnnotations (p_value);
+            
         } catch (IOException ex) {
         }
         return null;
     }
+	
+	void drawAnnotations (int probability){
+		//imp.flush();
+		//Annotate the fiji image with detections
+		imp.setImage(original);
+        //imp = WindowManager.getCurrentImage();
+		improc = imp.getProcessor();
+        improc.setColor(java.awt.Color.blue);
+		
+		int no_dets = 0;
+        for (@SuppressWarnings("unused") int[] det : detections) {
+		        no_dets++;
+		    }
+		
+		for (int count = 0; count < no_dets; count++){
+			if (detections.get(count)[2] > probability){
+				int x = detections.get(count)[0];
+	        	int y = detections.get(count)[1];
+	            improc.drawOval(x-5,y-5,10,10);
+			}
+        	
+        }
+	}
 }
