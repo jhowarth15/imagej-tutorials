@@ -159,6 +159,9 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	boolean doScaling = true;
 	ImageProcessor improc = null;
 	static ImagePlus original = null;
+	FolderOpener fo = null;
+	String folder = null;
+	ImageWindow win = null;
 	
 	List<int[]> positives = new ArrayList<int[]>();
 	List<int[]> negatives = new ArrayList<int[]>();
@@ -228,18 +231,18 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
  		
  		//Open image folder
 		DirectoryChooser dc = new DirectoryChooser("Choose a folder");  
-		String folder = dc.getDirectory();
+		folder = dc.getDirectory();
 		System.out.println("dir: " + folder);
  		
 
-		FolderOpener fo = new FolderOpener();
+		fo = new FolderOpener();
 
 		
 		this.imp = fo.openFolder(folder);
 		this.original = imp;
 		this.stack = imp.getImageStack();
 		
-		ImageWindow win = new ImageWindow(imp);
+		win = new ImageWindow(imp);
 		
 		//System.out.println("WIndow got: " + imp.getWindow());
 		imp.draw();
@@ -593,10 +596,12 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
     }
 	
 	void drawAnnotations (int probability){
-		//imp.flush();
 		//Annotate the fiji image with detections
-		imp.setImage(original);
-        //imp = WindowManager.getCurrentImage();
+		
+		this.imp = fo.openFolder(folder);
+		win.setImage(imp);
+		
+		
 		improc = imp.getProcessor();
         improc.setColor(java.awt.Color.blue);
 		
