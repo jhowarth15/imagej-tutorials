@@ -67,19 +67,23 @@ import ij.process.TypeConverter;
 import ij.io.DirectoryChooser;
 
 import java.awt.event.MouseListener;
+import java.awt.AlphaComposite;
 import java.awt.Button;
+import java.awt.Color;
 import java.awt.ComponentOrientation;
 import java.awt.Desktop;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
+import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Label;
 import java.awt.Panel;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.color.ColorSpace;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -88,9 +92,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorConvertOp;
 import java.util.*;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -164,6 +171,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	static ImagePlus original = null;
 	FolderOpener fo = null;
 	String folder = null;
+	File selectedFile = null;
 	ImageWindow win = null;
 	
 	JFileChooser chooser;
@@ -231,12 +239,8 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		pack();
  		show();
  		
-
  		
- 		
- 		//Open image folder or .tiff file
-//		DirectoryChooser dc = new DirectoryChooser("Choose a folder"); 
- 		
+ 		//Open image folder or .tif file 		
 		chooser = new JFileChooser();
 		chooser.setCurrentDirectory(new java.io.File("."));
 		chooser.setDialogTitle("Choose a file..");
@@ -245,49 +249,135 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		
 		int result = chooser.showOpenDialog(new JFrame());
 		if (result == JFileChooser.APPROVE_OPTION) {
-			File selectedFile = chooser.getSelectedFile();
+			selectedFile = chooser.getSelectedFile();
 			folder = selectedFile.toString();
 			System.out.println("Selected file: " + selectedFile.getAbsolutePath());
 		}
 		
-//		folder = dc.getDirectory();
-		
-		System.out.println("dir: " + folder);
  		
-		//Logic to deal with selection of tiff image or folder of PNGs:
-		
-
+		//Logic to deal with selection of tif image or folder of PNGs:
 		//If selection is a folder of PNGS
-		fo = new FolderOpener();
-		this.imp = fo.openFolder(folder);
-		this.original = imp;
-		this.stack = imp.getImageStack();
-		
-		win = new ImageWindow(imp);
-		
-		//System.out.println("WIndow got: " + imp.getWindow());
-		imp.draw();
+		if (selectedFile.isDirectory()){
+			fo = new FolderOpener();
+			this.imp = fo.openFolder(folder);
+			this.stack = imp.getImageStack();
+			
+			this.original = imp;
+			win = new ImageWindow(imp);
+			
+			//System.out.println("WIndow got: " + imp.getWindow());
+			imp.draw();
 
-		File dir = new File(folder);
-		File[] directoryListing = dir.listFiles();
-		if (directoryListing != null) {
-		    for (File child : directoryListing) {
-		      // Do something with child
-		    	String file_dir = child.toString();
-		    	//System.out.println(file_dir);
-		    	//System.out.println("");
-		    	if (file_dir.endsWith(".png"))
-		    	{
-		    		PostFile(file_dir, "127.0.0.1", 9999);
-		    	}
-		    }
-		}    
+			File dir = new File(folder);
+			File[] directoryListing = dir.listFiles();
+			if (directoryListing != null) {
+			    for (File child : directoryListing) {
+			      // Do something with child
+			    	String file_dir = child.toString();
+			    	//System.out.println(file_dir);
+			    	//System.out.println("");
+			    	if (file_dir.endsWith(".png"))
+			    	{
+			    		PostFile(file_dir, "127.0.0.1", 9999);
+			    	}
+			    }
+			}
+		}
+		
+		//If selection is tif file
+		String tif = ".tif";
+		if (selectedFile.isFile() && folder.toLowerCase().contains(tif.toLowerCase())){
+			//System.out.println("Tif selected");
+			
+			//Split the tif using imagereader
+//			ImageInputStream is = null;
+//			try {
+//				is = ImageIO.createImageInputStream(selectedFile);
+//			} catch (IOException e1) {
+//				// TODO Auto-generated catch block
+//				e1.printStackTrace();
+//			}
+//			try {
+//				if (is == null || is.length() == 0){
+//				  // handle error
+//				}
+//			} catch (IOException e1) {
+//				// TODO Auto-generated catch block
+//				e1.printStackTrace();
+//			}
+//			Iterator<ImageReader> iterator = ImageIO.getImageReaders(is);
+//			if (iterator == null || !iterator.hasNext()) {
+//			  try {
+//				throw new IOException("Image file format not supported by ImageIO: " + selectedFile);
+//			} catch (IOException e1) {
+//				// TODO Auto-generated catch block
+//				e1.printStackTrace();
+//			}
+//			}
+//			
+//			// We are just looking for the first reader compatible:
+//			ImageReader reader = (ImageReader) iterator.next();
+//			iterator = null;
+//			reader.setInput(is);
+//			int nbPages = 0;
+//			try {
+//				nbPages = reader.getNumImages(true);
+//			} catch (IOException e1) {
+//				// TODO Auto-generated catch block
+//				e1.printStackTrace();
+//			}
+//			
+//			System.out.println("number of pages: " + nbPages);
+//			try {
+//				BufferedImage img = reader.read(1);
+//			} catch (IOException e1) {
+//				// TODO Auto-generated catch block
+//				e1.printStackTrace();
+//			}
+			
+			this.imp = new ImagePlus(folder);
+//			this.stack = imp.getImageStack();
+//			numSlices = imp.getStackSize();
+//			slice = imp.getCurrentSlice();
+//			int processPngProg = 1;
+//			
+//			//while (processPngProg <= numSlices){
+//				BufferedImage redChannel = imp.getBufferedImage();
+//				imp.setSlice(slice+1);
+//				BufferedImage greenChannel = imp.getBufferedImage();
+//				BufferedImage combined = blend(redChannel, greenChannel, 0.5);
+//				processPngProg += 2;
+//				
+//				
+//				
+//				imp = new ImagePlus("no way", combined);
+//			//}
+			
+			this.original = imp;
+			win = new ImageWindow(imp);
+			
+			//System.out.println("WIndow got: " + imp.getWindow());
+			imp.draw();
+			
+			DeInterleave_ processTif = new DeInterleave_();
+			processTif.run("tif");
+			
+			
+			Colour_merge mergeChannels = new Colour_merge();
+			mergeChannels.run("tif");
+			
+			
+			
+			
+			
+			
+		}
+		    
 		
 		canvas = imp.getCanvas();
 		canvas.addMouseListener(this);
 		
-		
- 		
+
 	}
 
 	//public ImagePlus openFolder(java.lang.String path);
@@ -640,4 +730,34 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
         	
         }
 	}
+	
+	public BufferedImage blend (BufferedImage bi1, BufferedImage bi2,
+            double weight)
+		{
+			if (bi1 == null)
+			  throw new NullPointerException ("bi1 is null");
+			
+			if (bi2 == null)
+			  throw new NullPointerException ("bi2 is null");
+			
+			int width = bi1.getWidth ();
+			if (width != bi2.getWidth ())
+			  throw new IllegalArgumentException ("widths not equal");
+			
+			int height = bi1.getHeight ();
+			if (height != bi2.getHeight ())
+			  throw new IllegalArgumentException ("heights not equal");
+			
+			
+			BufferedImage bi3 = new BufferedImage (width, height,
+			                   BufferedImage.TYPE_INT_RGB);
+			Graphics2D g2d = bi3.createGraphics ();
+			g2d.drawImage (bi1, null, 0, 0);
+			g2d.setComposite (AlphaComposite.getInstance (AlphaComposite.SRC_OVER,
+			                       (float) (1.0-weight)));
+			g2d.drawImage (bi2, null, 0, 0);
+			g2d.dispose ();
+			
+			return bi3;
+		}
 }
