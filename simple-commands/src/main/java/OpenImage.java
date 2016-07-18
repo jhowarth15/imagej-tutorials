@@ -28,6 +28,7 @@ import org.scijava.command.Command;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.util.FileUtils;
 
 import com.github.kevinsawicki.http.HttpRequest;
 
@@ -90,6 +91,8 @@ import java.awt.image.BufferedImage;
 import java.util.*;
 
 import javax.imageio.ImageIO;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
@@ -163,6 +166,8 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	String folder = null;
 	ImageWindow win = null;
 	
+	JFileChooser chooser;
+	
 	List<int[]> positives = new ArrayList<int[]>();
 	List<int[]> negatives = new ArrayList<int[]>();
 	List<int[]> detections = new ArrayList<int[]>();
@@ -229,15 +234,31 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 
  		
  		
- 		//Open image folder
-		DirectoryChooser dc = new DirectoryChooser("Choose a folder");  
-		folder = dc.getDirectory();
+ 		//Open image folder or .tiff file
+//		DirectoryChooser dc = new DirectoryChooser("Choose a folder"); 
+ 		
+		chooser = new JFileChooser();
+		chooser.setCurrentDirectory(new java.io.File("."));
+		chooser.setDialogTitle("Choose a file..");
+		chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+		chooser.setMultiSelectionEnabled(true);
+		
+		int result = chooser.showOpenDialog(new JFrame());
+		if (result == JFileChooser.APPROVE_OPTION) {
+			File selectedFile = chooser.getSelectedFile();
+			folder = selectedFile.toString();
+			System.out.println("Selected file: " + selectedFile.getAbsolutePath());
+		}
+		
+//		folder = dc.getDirectory();
+		
 		System.out.println("dir: " + folder);
  		
-
-		fo = new FolderOpener();
-
+		//Logic to deal with selection of tiff image or folder of PNGs:
 		
+
+		//If selection is a folder of PNGS
+		fo = new FolderOpener();
 		this.imp = fo.openFolder(folder);
 		this.original = imp;
 		this.stack = imp.getImageStack();
