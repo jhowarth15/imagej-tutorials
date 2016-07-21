@@ -34,10 +34,10 @@ public class Colour_merge implements PlugIn {
 		gd.addChoice("Second Stack:", titles, titles[1]);
 
 		gd.addChoice("Second colour", pscolours, pscolours[0]);
-		gd.addCheckbox("Use 'Difference' operator?", false);
-		gd.addCheckbox("Keep source stacks?", true);
-		gd.addNumericField("% of 2 pre-subtracted from 1?", 0, 0);
-		gd.addMessage("When merging brightfield with  fluorescence,\nensure the brightfield image is the first stack");
+		//gd.addCheckbox("Use 'Difference' operator?", false);
+		//gd.addCheckbox("Keep source stacks?", true);
+		//gd.addNumericField("% of 2 pre-subtracted from 1?", 0, 0);
+		//gd.addMessage("When merging brightfield with  fluorescence,\nensure the brightfield image is the first stack");
 
 		gd.showDialog();
 
@@ -52,9 +52,9 @@ public class Colour_merge implements PlugIn {
 
 		colourindex[1] = gd.getNextChoiceIndex();
 
-		final boolean UseDiff = gd.getNextBoolean();
-		final boolean keep = gd.getNextBoolean();
-		double preSub = gd.getNextNumber();
+//		final boolean UseDiff = false;
+//		final boolean keep = false;
+//		double preSub = 0;
 
 		final ImagePlus impCh1 = WindowManager.getImage(wList[index[0]]);
 		final ImagePlus impCh2 = WindowManager.getImage(wList[index[1]]);
@@ -96,45 +96,46 @@ public class Colour_merge implements PlugIn {
 		final ImagePlus impCh2B = WindowManager.getCurrentImage();
 		final ImageWindow winCh2B = impCh2B.getWindow();
 
-		if (preSub != 0) {
-			WindowManager.setCurrentWindow(winCh2B);
-			IJ.run("Duplicate...", "title=Ch2C duplicate");
-			final ImagePlus impCh2C = WindowManager.getCurrentImage();
-
-			final ImageWindow winCh2C = impCh2C.getWindow();
-			WindowManager.setCurrentWindow(winCh2C);
-			preSub = preSub / 100;
-			IJ.run("Multiply...", "value=" + preSub);
-			IJ.run("Image Calculator...", "image1=Ch1 operation=Subtract image2=Ch2C");
-			impCh2C.changes = false;
-			winCh2C.close();
-		}
+//		if (preSub != 0) {
+//			WindowManager.setCurrentWindow(winCh2B);
+//			IJ.run("Duplicate...", "title=Ch2C duplicate");
+//			final ImagePlus impCh2C = WindowManager.getCurrentImage();
+//
+//			final ImageWindow winCh2C = impCh2C.getWindow();
+//			WindowManager.setCurrentWindow(winCh2C);
+//			preSub = preSub / 100;
+//			IJ.run("Multiply...", "value=" + preSub);
+//			IJ.run("Image Calculator...", "image1=Ch1 operation=Subtract image2=Ch2C");
+//			impCh2C.changes = false;
+//			winCh2C.close();
+//		}
 
 		WindowManager.setCurrentWindow(winCh2B);
 		if (secondcol != "<Current>") IJ.run(secondcol);
 		IJ.run("RGB Color");
+		
+		winCh2.close();
 
 		WindowManager.setCurrentWindow(winCh1B);
 		if (firstcol != "<Current>") IJ.run(firstcol);
 		IJ.run("RGB Color");
+		
+		winCh1.close();
+
 
 //merge
-		if (UseDiff == false) IJ.run("Image Calculator...",
-			"image1='Ch1' operation=Add  image2=Ch2 stack");
+		IJ.run("Image Calculator...", "image1='Ch1' operation=Add  image2=Ch2 stack");
 
-		if (UseDiff == true) IJ.run("Image Calculator...",
-			"image1='Ch1' operation=Difference image2=Ch2 stack");
+//		if (UseDiff == true) IJ.run("Image Calculator...",
+//			"image1='Ch1' operation=Difference image2=Ch2 stack");
 
 //rename merge
 		IJ.run("Rename...", "title='Colour merge");
 
 		impCh2B.changes = false;
 
-		if (!keep) {
-			winCh2.close();
-			winCh1.close();
-		}
 		winCh2B.close();
+
 		IJ.selectWindow("Ch1");
 		IJ.run("Rename...", "title='Colour merge'");
 	}

@@ -242,7 +242,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
  		
  		//Open image folder or .tif file 		
 		chooser = new JFileChooser();
-		chooser.setCurrentDirectory(new java.io.File("."));
+		chooser.setCurrentDirectory(new java.io.File("../../"));
 		chooser.setDialogTitle("Choose a file..");
 		chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 		chooser.setMultiSelectionEnabled(true);
@@ -287,71 +287,10 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		//If selection is tif file
 		String tif = ".tif";
 		if (selectedFile.isFile() && folder.toLowerCase().contains(tif.toLowerCase())){
-			//System.out.println("Tif selected");
-			
-			//Split the tif using imagereader
-//			ImageInputStream is = null;
-//			try {
-//				is = ImageIO.createImageInputStream(selectedFile);
-//			} catch (IOException e1) {
-//				// TODO Auto-generated catch block
-//				e1.printStackTrace();
-//			}
-//			try {
-//				if (is == null || is.length() == 0){
-//				  // handle error
-//				}
-//			} catch (IOException e1) {
-//				// TODO Auto-generated catch block
-//				e1.printStackTrace();
-//			}
-//			Iterator<ImageReader> iterator = ImageIO.getImageReaders(is);
-//			if (iterator == null || !iterator.hasNext()) {
-//			  try {
-//				throw new IOException("Image file format not supported by ImageIO: " + selectedFile);
-//			} catch (IOException e1) {
-//				// TODO Auto-generated catch block
-//				e1.printStackTrace();
-//			}
-//			}
-//			
-//			// We are just looking for the first reader compatible:
-//			ImageReader reader = (ImageReader) iterator.next();
-//			iterator = null;
-//			reader.setInput(is);
-//			int nbPages = 0;
-//			try {
-//				nbPages = reader.getNumImages(true);
-//			} catch (IOException e1) {
-//				// TODO Auto-generated catch block
-//				e1.printStackTrace();
-//			}
-//			
-//			System.out.println("number of pages: " + nbPages);
-//			try {
-//				BufferedImage img = reader.read(1);
-//			} catch (IOException e1) {
-//				// TODO Auto-generated catch block
-//				e1.printStackTrace();
-//			}
+
 			
 			this.imp = new ImagePlus(folder);
-//			this.stack = imp.getImageStack();
-//			numSlices = imp.getStackSize();
-//			slice = imp.getCurrentSlice();
-//			int processPngProg = 1;
-//			
-//			//while (processPngProg <= numSlices){
-//				BufferedImage redChannel = imp.getBufferedImage();
-//				imp.setSlice(slice+1);
-//				BufferedImage greenChannel = imp.getBufferedImage();
-//				BufferedImage combined = blend(redChannel, greenChannel, 0.5);
-//				processPngProg += 2;
-//				
-//				
-//				
-//				imp = new ImagePlus("no way", combined);
-//			//}
+
 			
 			this.original = imp;
 			win = new ImageWindow(imp);
@@ -366,10 +305,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 			Colour_merge mergeChannels = new Colour_merge();
 			mergeChannels.run("tif");
 			
-			
-			
-			
-			
+
 			
 		}
 		    
