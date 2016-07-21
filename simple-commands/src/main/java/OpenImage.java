@@ -164,7 +164,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	ImageStack stack = null;
 	ImageCanvas canvas = null;
 	ij.gui.PolygonRoi annotations = null;
-	int numSlices,slice;
+	int numSlices, slice;
 	protected Label label1;
 	boolean doScaling = true;
 	ImageProcessor improc = null;
@@ -262,7 +262,6 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 			this.imp = fo.openFolder(folder);
 			this.stack = imp.getImageStack();
 			
-			this.original = imp;
 			win = new ImageWindow(imp);
 			
 			//System.out.println("WIndow got: " + imp.getWindow());
@@ -278,9 +277,11 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 			    	//System.out.println("");
 			    	if (file_dir.endsWith(".png"))
 			    	{
+			    		//Post file to server
 			    		PostFile(file_dir, "127.0.0.1", 9999);
 			    	}
 			    }
+			    IJ.showMessage("Images Uploaded");
 			}
 		}
 		
@@ -291,21 +292,33 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 			
 			this.imp = new ImagePlus(folder);
 
-			
-			this.original = imp;
 			win = new ImageWindow(imp);
 			
 			//System.out.println("WIndow got: " + imp.getWindow());
 			imp.draw();
 			
+			//Break down tif by channel
 			DeInterleave_ processTif = new DeInterleave_();
 			processTif.run("tif");
 			
-			
+			//Remerge channels with different colours
 			Colour_merge mergeChannels = new Colour_merge();
 			mergeChannels.run("tif");
 			
+			//Reset imageplus etc
+			imp = WindowManager.getCurrentImage();
+			numSlices = imp.getStackSize();
+			slice = imp.getCurrentSlice();
 
+			//Post images to server as pngs
+			for (int s = 1; s <= numSlices; s++){
+				BufferedImage buffImage = imp.getBufferedImage();
+	    		PostFile(buffImage, "127.0.0.1", 9999);
+	    		imp.setSlice(s);
+			}
+			
+			imp.setSlice(1);
+			IJ.showMessage("Images Uploaded");
 			
 		}
 		    
@@ -453,7 +466,6 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	
 	private void train() throws IOException, URISyntaxException {
 		// TODO Auto-generated method stub
-		int data = 8;
 //		URI uri = new URI("http://localhost:8080/" + data);
 //		Desktop dt = Desktop.getDesktop();
 //		dt.browse(uri.resolve(uri));
@@ -496,6 +508,8 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	      System.out.print(annotJson);
 	      
 	      http("http://localhost:8080/", annotJson);
+	      
+	      this.original = imp.duplicate();
 		
 	}
 	
@@ -576,7 +590,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
         return result;
     }
 	
-	//Uploads an image file to the python server
+	//Uploads an image file to the python server from directory
 	public static void PostFile (String directory, String IP_ADDRESS, int PORT_NO) {
 		
         BufferedImage bufferedImage = null;
@@ -591,6 +605,26 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
             OutputStream outputStream = socket.getOutputStream();
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             ImageIO.write(bufferedImage, "png", byteArrayOutputStream);
+            // get the size of image
+            byte[] size = ByteBuffer.allocate(4).putInt(byteArrayOutputStream.size()).array();
+            outputStream.write(size);
+            outputStream.write(byteArrayOutputStream.toByteArray());
+            outputStream.flush();
+        } catch (IOException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+		
+	}
+	
+	//Uploads an image file to the python server
+	public static void PostFile (BufferedImage buffImage, String IP_ADDRESS, int PORT_NO) {
+		    
+        try {
+        	Socket socket = new Socket(IP_ADDRESS, PORT_NO);
+            OutputStream outputStream = socket.getOutputStream();
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            ImageIO.write(buffImage, "png", byteArrayOutputStream);
             // get the size of image
             byte[] size = ByteBuffer.allocate(4).putInt(byteArrayOutputStream.size()).array();
             outputStream.write(size);
@@ -645,9 +679,10 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	void drawAnnotations (int probability){
 		//Annotate the fiji image with detections
 		
-		this.imp = fo.openFolder(folder);
-		win.setImage(imp);
+//		this.imp = fo.openFolder(folder);
+//		win.setImage(imp);
 		
+		//imp.setImage(OpenImage.original);
 		
 		improc = imp.getProcessor();
         improc.setColor(java.awt.Color.blue);
@@ -665,35 +700,8 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 			}
         	
         }
+		imp.updateAndDraw();
+		
 	}
 	
-	public BufferedImage blend (BufferedImage bi1, BufferedImage bi2,
-            double weight)
-		{
-			if (bi1 == null)
-			  throw new NullPointerException ("bi1 is null");
-			
-			if (bi2 == null)
-			  throw new NullPointerException ("bi2 is null");
-			
-			int width = bi1.getWidth ();
-			if (width != bi2.getWidth ())
-			  throw new IllegalArgumentException ("widths not equal");
-			
-			int height = bi1.getHeight ();
-			if (height != bi2.getHeight ())
-			  throw new IllegalArgumentException ("heights not equal");
-			
-			
-			BufferedImage bi3 = new BufferedImage (width, height,
-			                   BufferedImage.TYPE_INT_RGB);
-			Graphics2D g2d = bi3.createGraphics ();
-			g2d.drawImage (bi1, null, 0, 0);
-			g2d.setComposite (AlphaComposite.getInstance (AlphaComposite.SRC_OVER,
-			                       (float) (1.0-weight)));
-			g2d.drawImage (bi2, null, 0, 0);
-			g2d.dispose ();
-			
-			return bi3;
-		}
 }
