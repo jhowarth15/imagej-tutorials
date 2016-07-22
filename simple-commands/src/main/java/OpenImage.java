@@ -52,6 +52,7 @@ import ij.gui.Roi;
 import ij.gui.Toolbar;
 import ij.gui.PolygonRoi;
 import ij.io.Opener;
+import ij.io.FileSaver;
 import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.plugin.filter.Analyzer;
@@ -169,12 +170,12 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	boolean doScaling = true;
 	ImageProcessor improc = null;
 	static ImagePlus original = null;
-	FolderOpener fo = null;
-	String folder = null;
-	File selectedFile = null;
+	FolderOpener fo, fop = null;
+	String folder, saveFolder = null;
+	File selectedFile, selectedFolder = null;
 	ImageWindow win = null;
 	
-	JFileChooser chooser;
+	JFileChooser chooser, pngFolder;
 	
 	List<int[]> positives = new ArrayList<int[]>();
 	List<int[]> negatives = new ArrayList<int[]>();
@@ -240,7 +241,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
  		show();
  		
  		
- 		//Open image folder or .tif file 		
+ 		//Open png image folder or .tif file 		
 		chooser = new JFileChooser();
 		chooser.setCurrentDirectory(new java.io.File("../../"));
 		chooser.setDialogTitle("Choose a file..");
@@ -254,10 +255,10 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 			System.out.println("Selected file: " + selectedFile.getAbsolutePath());
 		}
 		
- 		
 		//Logic to deal with selection of tif image or folder of PNGs:
 		//If selection is a folder of PNGS
 		if (selectedFile.isDirectory()){
+			
 			fo = new FolderOpener();
 			this.imp = fo.openFolder(folder);
 			this.stack = imp.getImageStack();
@@ -267,22 +268,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 			//System.out.println("WIndow got: " + imp.getWindow());
 			imp.draw();
 
-			File dir = new File(folder);
-			File[] directoryListing = dir.listFiles();
-			if (directoryListing != null) {
-			    for (File child : directoryListing) {
-			      // Do something with child
-			    	String file_dir = child.toString();
-			    	//System.out.println(file_dir);
-			    	//System.out.println("");
-			    	if (file_dir.endsWith(".png"))
-			    	{
-			    		//Post file to server
-			    		PostFile(file_dir, "127.0.0.1", 9999);
-			    	}
-			    }
-			    IJ.showMessage("Images Uploaded");
-			}
+			serverUploadAllFiles(folder);
 		}
 		
 		//If selection is tif file
@@ -305,20 +291,47 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 			Colour_merge mergeChannels = new Colour_merge();
 			mergeChannels.run("tif");
 			
-			//Reset imageplus etc
+			//Reset imageplus etc to new merged png
 			imp = WindowManager.getCurrentImage();
 			numSlices = imp.getStackSize();
 			slice = imp.getCurrentSlice();
+			
+			//Save pngs		
+			pngFolder = new JFileChooser();
+			pngFolder.setCurrentDirectory(new java.io.File("../../"));
+			pngFolder.setDialogTitle("Choose a folder to save PNGs..");
+			pngFolder.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+			pngFolder.setMultiSelectionEnabled(false);
+			
+			int result1 = pngFolder.showOpenDialog(new JFrame());
+			if (result1 == JFileChooser.APPROVE_OPTION) {
+				selectedFolder = pngFolder.getSelectedFile();
+				folder = selectedFolder.toString();
+				System.out.println("Selected file: " + selectedFolder.getAbsolutePath());
+				
+				for (int s = imp.getCurrentSlice(); s <= numSlices; s++){
+					imp.setSlice(s);
+					//Send image to server
+					BufferedImage buffImage = imp.getBufferedImage();
+					PostFile(buffImage, "127.0.0.1", 9999);
+					//Save png image on user machine
+					FileSaver fs = new FileSaver(imp);
+					String filepath = folder + "/" + "frame_" + s + ".png";
+					fs.saveAsPng(filepath);
+				}	
+				
+			}
 
 			//Post images to server as pngs
-			for (int s = 1; s <= numSlices; s++){
-				BufferedImage buffImage = imp.getBufferedImage();
-	    		PostFile(buffImage, "127.0.0.1", 9999);
-	    		imp.setSlice(s);
-			}
+			//serverUploadAllFiles(folder);
 			
+//			for (int s = 1; s <= numSlices; s++){
+				//imp.setSlice(s);
+//				BufferedImage buffImage = imp.getBufferedImage();
+//	    		PostFile(buffImage, "127.0.0.1", 9999);
+//			}
+//			
 			imp.setSlice(1);
-			IJ.showMessage("Images Uploaded");
 			
 		}
 		    
@@ -508,9 +521,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	      System.out.print(annotJson);
 	      
 	      http("http://localhost:8080/", annotJson);
-	      
-	      this.original = imp.duplicate();
-		
+	      		
 	}
 	
 
@@ -679,11 +690,17 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	void drawAnnotations (int probability){
 		//Annotate the fiji image with detections
 		
-//		this.imp = fo.openFolder(folder);
-//		win.setImage(imp);
+//		this.imp = new ImagePlus(folder);
+//		win = new ImageWindow(imp);
 		
-		//imp.setImage(OpenImage.original);
+		//System.out.println("WIndow got: " + imp.getWindow());
+		//imp.draw();
 		
+		fop = new FolderOpener();
+		this.imp = fop.openFolder(folder);
+		win.setImage(imp);
+		imp.updateAndDraw();
+				
 		improc = imp.getProcessor();
         improc.setColor(java.awt.Color.blue);
 		
@@ -702,6 +719,25 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
         }
 		imp.updateAndDraw();
 		
+	}
+	
+	void serverUploadAllFiles(String folder){
+		File dir = new File(folder);
+		File[] directoryListing = dir.listFiles();
+		if (directoryListing != null) {
+		    for (File child : directoryListing) {
+		      // Do something with child
+		    	String file_dir = child.toString();
+		    	//System.out.println(file_dir);
+		    	//System.out.println("");
+		    	if (file_dir.endsWith(".png"))
+		    	{
+		    		//Post file to server
+		    		PostFile(file_dir, "127.0.0.1", 9999);
+		    	}
+		    }
+		    IJ.showMessage("Images Uploaded");
+		}
 	}
 	
 }
