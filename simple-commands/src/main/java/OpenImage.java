@@ -306,6 +306,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 			int result1 = pngFolder.showOpenDialog(new JFrame());
 			if (result1 == JFileChooser.APPROVE_OPTION) {
 				selectedFolder = pngFolder.getSelectedFile();
+				folder = null;
 				folder = selectedFolder.toString();
 				System.out.println("Selected file: " + selectedFolder.getAbsolutePath());
 				
@@ -690,14 +691,11 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	void drawAnnotations (int probability){
 		//Annotate the fiji image with detections
 		
-//		this.imp = new ImagePlus(folder);
-//		win = new ImageWindow(imp);
 		
-		//System.out.println("WIndow got: " + imp.getWindow());
-		//imp.draw();
-		
+		System.out.println("Retrieve from folder: " + folder);
 		fop = new FolderOpener();
 		this.imp = fop.openFolder(folder);
+		
 		win.setImage(imp);
 		imp.updateAndDraw();
 				
@@ -728,7 +726,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		    for (File child : directoryListing) {
 		      // Do something with child
 		    	String file_dir = child.toString();
-		    	//System.out.println(file_dir);
+		    	System.out.println(file_dir);
 		    	//System.out.println("");
 		    	if (file_dir.endsWith(".png"))
 		    	{
