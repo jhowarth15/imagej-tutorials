@@ -18,8 +18,13 @@ import ij.plugin.PlugIn;
  * somebody probably depends on. */
 
 public class DeInterleave_ implements PlugIn {
+	
+	public DeInterleave_(int chans) {
+		this.nChannels = chans;
+	}
+	
     int nChannels = (int) Prefs.get("Deint_ch.int", 2);
-    boolean keep = Prefs.get("Deint_keep.boolean", true);
+    boolean keep = false;
 
     public void run(String arg) {
         ImagePlus inputImage = WindowManager.getCurrentImage();
@@ -67,16 +72,16 @@ public class DeInterleave_ implements PlugIn {
     }
 
     public boolean showDialog() {
-        GenericDialog gd = new GenericDialog("De-Interleaver");
-        gd.addNumericField("How many channels?", nChannels, 0);
-        //gd.addCheckbox("Keep source stack", keep);
-        gd.showDialog();
-        if (gd.wasCanceled()) return false;
-
-        nChannels = (int) gd.getNextNumber();
-        keep = false;
-        Prefs.set("Deint_ch.int", nChannels);
-        Prefs.set("Deint_keep.boolean", keep);
+//        GenericDialog gd = new GenericDialog("De-Interleaver");
+//        gd.addNumericField("How many channels?", nChannels, 0);
+//        //gd.addCheckbox("Keep source stack", keep);
+//        gd.showDialog();
+//        if (gd.wasCanceled()) return false;
+//
+//        nChannels = (int) gd.getNextNumber();
+//        keep = false;
+//        Prefs.set("Deint_ch.int", nChannels);
+//        Prefs.set("Deint_keep.boolean", keep);
         return true;
     }
 

@@ -174,6 +174,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	String folder, saveFolder = null;
 	File selectedFile, selectedFolder = null;
 	ImageWindow win = null;
+	int nChannels = 2;
 	
 	JFileChooser chooser, pngFolder;
 	
@@ -255,6 +256,14 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 			System.out.println("Selected file: " + selectedFile.getAbsolutePath());
 		}
 		
+		//User selects number of channels
+		GenericDialog gd = new GenericDialog("De-Interleaver");
+        gd.addNumericField("How many channels?", nChannels, 0);
+
+        gd.showDialog();
+
+        nChannels = (int) gd.getNextNumber();
+        		
 		//Logic to deal with selection of tif image or folder of PNGs:
 		//If selection is a folder of PNGS
 		if (selectedFile.isDirectory()){
@@ -284,7 +293,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 			imp.draw();
 			
 			//Break down tif by channel
-			DeInterleave_ processTif = new DeInterleave_();
+			DeInterleave_ processTif = new DeInterleave_(nChannels);
 			processTif.run("tif");
 			
 			//Remerge channels with different colours
@@ -489,7 +498,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 //		        .body();
 //		System.out.println("Response was: " + response);
 		
-			//Parse the positives and negatives list into Json string and post to URL//
+		//Parse the positives and negatives list into Json string and post to URL//
 	      int  count = 0;
 	      String annotJson = "[{\"pos\": [";
 	      for (int[] pos : positives) {
@@ -516,6 +525,10 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	      {
 	    	  annotJson = annotJson.substring(0, annotJson.length()-2);
 	      }
+	      
+	      //Add other settings data to json string: nchannels, 
+	      annotJson = annotJson + "]},{\"settings\": [" + nChannels;
+	      
 	      annotJson = annotJson + "]}]";
 	      
 	      //String jsonText = "[{\"foo\": [\"bar\", \"black\"]},{\"fiz\": \"biz\"}]";  //"data="+out.toString(); //////ISSUES HERE/////////
@@ -700,7 +713,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		imp.updateAndDraw();
 				
 		improc = imp.getProcessor();
-        improc.setColor(java.awt.Color.blue);
+        improc.setColor(java.awt.Color.yellow);
 		
 		int no_dets = 0;
         for (@SuppressWarnings("unused") int[] det : detections) {
