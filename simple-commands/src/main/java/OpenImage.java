@@ -186,6 +186,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	JSONObject obj = new JSONObject();
 	
 	public void run(String arg) {
+		IJ.freeMemory();
 		oi = new OpenImage();
 	}
 	
@@ -706,14 +707,23 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	
 	void drawAnnotations (int probability){
 		//Annotate the fiji image with detections
+		//IJ.showMessage(IJ.freeMemory());
 		
+		//System.out.println("WIndow got: " + imp.getWindow());
+		
+		//win.close();
+		IJ.freeMemory();
 		
 		System.out.println("Retrieve from folder: " + folder);
 		fop = new FolderOpener();
 		this.imp = fop.openFolder(folder);
 		
-		win.setImage(imp);
-		imp.updateAndDraw();
+		this.stack = imp.getImageStack();
+		win = new ImageWindow(imp);
+		imp.draw();
+		
+//		win.setImage(imp);
+//		imp.updateAndDraw();
 				
 		improc = imp.getProcessor();
         improc.setColor(java.awt.Color.yellow);
