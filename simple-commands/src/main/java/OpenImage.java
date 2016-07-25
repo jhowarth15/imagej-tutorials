@@ -257,12 +257,15 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		}
 		
 		//User selects number of channels
+		final String[] gdChannels =
+			{ "2", "3" };
+		
 		GenericDialog gd = new GenericDialog("De-Interleaver");
-        gd.addNumericField("How many channels?", nChannels, 0);
+        gd.addChoice("How many channels?", gdChannels, gdChannels[0]);
 
         gd.showDialog();
 
-        nChannels = (int) gd.getNextNumber();
+        nChannels = Integer.parseInt(gdChannels[gd.getNextChoiceIndex()]);
         		
 		//Logic to deal with selection of tif image or folder of PNGs:
 		//If selection is a folder of PNGS
@@ -297,7 +300,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 			processTif.run("tif");
 			
 			//Remerge channels with different colours
-			Colour_merge mergeChannels = new Colour_merge();
+			Colour_merge mergeChannels = new Colour_merge(nChannels);
 			mergeChannels.run("tif");
 			
 			//Reset imageplus etc to new merged png

@@ -7,7 +7,12 @@ import ij.gui.ImageWindow;
 import ij.plugin.PlugIn;
 
 public class Colour_merge implements PlugIn {
-
+	int nChannels = 2;
+	
+	public Colour_merge(int chans){
+		this.nChannels = chans;
+	}
+	
 	@Override
 	public void run(final String arg) {
 		final int[] wList = WindowManager.getIDList();
@@ -28,12 +33,19 @@ public class Colour_merge implements PlugIn {
 				"Grays" };
 
 		final GenericDialog gd = new GenericDialog("Colour Merge");
+		
 		gd.addChoice("First Stack:", titles, titles[0]);
-		gd.addChoice("First colour", pscolours, pscolours[0]);
+		gd.addChoice("First colour", pscolours, pscolours[4]);
 
 		gd.addChoice("Second Stack:", titles, titles[1]);
-
-		gd.addChoice("Second colour", pscolours, pscolours[0]);
+		gd.addChoice("Second colour", pscolours, pscolours[5]);
+		
+		if (this.nChannels == 3) {
+			gd.addChoice("Third Stack:", titles, titles[2]);
+			gd.addChoice("Third colour", pscolours, pscolours[6]);
+		}
+		
+		
 		//gd.addCheckbox("Use 'Difference' operator?", false);
 		//gd.addCheckbox("Keep source stacks?", true);
 		//gd.addNumericField("% of 2 pre-subtracted from 1?", 0, 0);
@@ -49,8 +61,12 @@ public class Colour_merge implements PlugIn {
 		colourindex[0] = gd.getNextChoiceIndex();
 
 		index[1] = gd.getNextChoiceIndex();
-
 		colourindex[1] = gd.getNextChoiceIndex();
+		
+		if (this.nChannels == 3) {
+			index[2] = gd.getNextChoiceIndex();
+			colourindex[2] = gd.getNextChoiceIndex();
+		}
 
 //		final boolean UseDiff = false;
 //		final boolean keep = false;
@@ -58,9 +74,19 @@ public class Colour_merge implements PlugIn {
 
 		final ImagePlus impCh1 = WindowManager.getImage(wList[index[0]]);
 		final ImagePlus impCh2 = WindowManager.getImage(wList[index[1]]);
+		ImagePlus impCh3 = null;
+		
+		if (this.nChannels == 3) {
+			impCh3 = WindowManager.getImage(wList[index[2]]);
+		}
 
 		final String firstcol = pscolours[colourindex[0]];
 		final String secondcol = pscolours[colourindex[1]];
+		
+		String thirdcol = null;
+		if (this.nChannels == 3) {
+			thirdcol = pscolours[colourindex[2]];
+			}
 
 		final ImagePlus[] image = new ImagePlus[3];
 
@@ -95,6 +121,21 @@ public class Colour_merge implements PlugIn {
 		IJ.run("Duplicate...", "title=Ch2 duplicate");
 		final ImagePlus impCh2B = WindowManager.getCurrentImage();
 		final ImageWindow winCh2B = impCh2B.getWindow();
+		
+		ImagePlus impCh3B = null;
+		ImageWindow winCh3 = null;
+		ImageWindow winCh3B = null;
+		if (this.nChannels == 3) {
+			//get orignial cyan image
+			winCh3 = impCh3.getWindow();
+			WindowManager.setCurrentWindow(winCh3);
+			
+			//Duplicate and assign vars		
+			IJ.run("Duplicate...", "title=Ch3 duplicate");
+			impCh3B = WindowManager.getCurrentImage();
+			winCh3B = impCh3B.getWindow();
+			}
+		
 
 //		if (preSub != 0) {
 //			WindowManager.setCurrentWindow(winCh2B);
@@ -110,6 +151,14 @@ public class Colour_merge implements PlugIn {
 //			winCh2C.close();
 //		}
 
+		if (this.nChannels == 3) {
+			WindowManager.setCurrentWindow(winCh3B);
+			if (thirdcol != "<Current>") IJ.run(thirdcol);
+			IJ.run("RGB Color");
+			
+			winCh3.close();
+		}
+		
 		WindowManager.setCurrentWindow(winCh2B);
 		if (secondcol != "<Current>") IJ.run(secondcol);
 		IJ.run("RGB Color");
@@ -125,6 +174,12 @@ public class Colour_merge implements PlugIn {
 
 //merge
 		IJ.run("Image Calculator...", "image1='Ch1' operation=Add  image2=Ch2 stack");
+		
+		if (this.nChannels == 3) {
+			IJ.run("Image Calculator...", "image1='Ch1' operation=Add  image2=Ch3 stack");
+			impCh3B.changes = false;
+			winCh3B.close();
+		}
 
 //		if (UseDiff == true) IJ.run("Image Calculator...",
 //			"image1='Ch1' operation=Difference image2=Ch2 stack");
