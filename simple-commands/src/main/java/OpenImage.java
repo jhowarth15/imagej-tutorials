@@ -206,6 +206,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		addButton("<-", panel);
 		addButton("->", panel);
 		addButton("Train", panel);
+		addButton("Test", panel);
 		
  		//Create the slider
  		JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
@@ -476,7 +477,14 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 			} catch (IOException | URISyntaxException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
-			}
+		}
+		if (label.equals("Test"))
+			try {
+				test();
+			} catch (IOException | URISyntaxException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+		}
 	}
 	
 	
@@ -542,8 +550,14 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	      //String jsonText = "[{\"foo\": [\"bar\", \"black\"]},{\"fiz\": \"biz\"}]";  //"data="+out.toString(); //////ISSUES HERE/////////
 	      System.out.print(annotJson);
 	      
-	      http("http://localhost:8080/", annotJson);
+	      httpTrain("http://localhost:8080/", annotJson);
 	      		
+	}
+	
+	private void test() throws IOException, URISyntaxException {
+		String currentFrame = imp.getCurrentSlice() + "";
+		
+		httpTest("http://localhost:8080/test", currentFrame);
 	}
 	
 
@@ -670,7 +684,26 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		
 	}
 	
-	public HttpResponse http(String url, String body) {
+	public HttpResponse httpTrain(String url, String body) {
+
+        try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
+            
+        	HttpPost request = new HttpPost(url);
+            StringEntity params = new StringEntity(body);
+            request.addHeader("content-type", "application/json");
+            request.setEntity(params);
+            //HttpResponse result = httpClient.execute(request);
+            
+            ResponseHandler<String> responseHandler = new BasicResponseHandler();
+            httpClient.execute(request, responseHandler);
+            
+            
+        } catch (IOException ex) {
+        }
+        return null;
+    }
+	
+	public HttpResponse httpTest(String url, String body) {
 
         try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
             
