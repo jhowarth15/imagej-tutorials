@@ -275,6 +275,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 			fo = new FolderOpener();
 			this.imp = fo.openFolder(folder);
 			this.stack = imp.getImageStack();
+			numSlices = imp.getStackSize();
 			
 			win = new ImageWindow(imp);
 			
@@ -532,8 +533,9 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	    	  annotJson = annotJson.substring(0, annotJson.length()-2);
 	      }
 	      
+	      
 	      //Add other settings data to json string: nchannels, 
-	      annotJson = annotJson + "]},{\"settings\": [" + nChannels;
+	      annotJson = annotJson + "]},{\"settings\": [" + nChannels + "," + imp.getCurrentSlice() + "," + numSlices;
 	      
 	      annotJson = annotJson + "]}]";
 	      
