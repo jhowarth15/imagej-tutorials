@@ -308,6 +308,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 			imp = WindowManager.getCurrentImage();
 			numSlices = imp.getStackSize();
 			slice = imp.getCurrentSlice();
+			this.stack = imp.getImageStack();
 			
 			//Save pngs		
 			pngFolder = new JFileChooser();
@@ -330,7 +331,8 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 					PostFile(buffImage, "127.0.0.1", 9999);
 					//Save png image on user machine
 					FileSaver fs = new FileSaver(imp);
-					String filepath = folder + "/" + "frame_" + s + ".png";
+					String formattedFrameNum = String.format("%04d", s);
+					String filepath = folder + "/" + "frame_" + formattedFrameNum + ".png";
 					fs.saveAsPng(filepath);
 				}	
 				
@@ -709,23 +711,46 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		//Annotate the fiji image with detections
 		//IJ.showMessage(IJ.freeMemory());
 		
-		//System.out.println("WIndow got: " + imp.getWindow());
+		//System.out.println("Window got: " + imp.getWindow());
 		
 		//win.close();
 		IJ.freeMemory();
 		
-		System.out.println("Retrieve from folder: " + folder);
-		fop = new FolderOpener();
-		this.imp = fop.openFolder(folder);
+//		System.out.println("Retrieve from folder: " + folder);
+//		fop = new FolderOpener();
+//		this.imp = fop.openFolder(folder);
 		
-		this.stack = imp.getImageStack();
-		win = new ImageWindow(imp);
-		imp.draw();
+//		this.stack = imp.getImageStack();
+//		win = new ImageWindow(imp);
+//		imp.draw();
 		
 //		win.setImage(imp);
 //		imp.updateAndDraw();
+		
+		//Replace just the frame/slice in question
+		slice = imp.getCurrentSlice();
+		
+		String formattedFrameNum = String.format("%04d", slice);
+		String fileString = folder + "/frame_" + formattedFrameNum +".png";
+		System.out.println(fileString);
+		
+		BufferedImage loadedImg = null;
+        try {
+            loadedImg = ImageIO.read(new File(fileString));
+        } catch (IOException err) {
+            err.printStackTrace();
+        }
+
+		ImageProcessor ipLoadFrame = new ColorProcessor(loadedImg);
+		
+		stack.addSlice(null, ipLoadFrame, slice);
+		
+		stack.deleteSlice(slice);
+		
+		
+		//Draw the annotations
 				
-		improc = imp.getProcessor();
+		improc = ipLoadFrame;//imp.getProcessor();
         improc.setColor(java.awt.Color.yellow);
 		
 		int no_dets = 0;
