@@ -207,6 +207,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		addButton("->", panel);
 		addButton("Train", panel);
 		addButton("Test", panel);
+		addButton("Test All", panel);
 		
  		//Create the slider
  		JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
@@ -465,11 +466,15 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 //		System.out.println("slice: " + slice);
 //		System.out.println("imp: " + imp);
 		
-		if (label.equals("->"))
+		if (label.equals("->")){
 			fwd();
+			drawAnnotations (p_value);
+		}
 		
-		if (label.equals("<-"))
+		if (label.equals("<-")){
 			bwd();
+			drawAnnotations (p_value);
+		}
 		
 		if (label.equals("Train"))
 			try {
@@ -485,8 +490,9 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 		}
+		if (label.equals("Test All"))
+			testAllFrames();
 	}
-	
 	
 	private void fwd() {
 		// TODO Auto-generated method stub
@@ -698,12 +704,14 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
             httpClient.execute(request, responseHandler);
             
             
-        } catch (IOException ex) {
+        } 
+        
+        catch (IOException ex) {
         }
         return null;
     }
 	
-	public HttpResponse httpTest(String url, String body) {
+	public void httpTest(String url, String body) {
 
         try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
             
@@ -739,8 +747,19 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
             
         } catch (IOException ex) {
         }
-        return null;
+        return;
     }
+	
+	void testAllFrames (){
+		for (int c = 1; c <= numSlices; c++){
+			imp.setSlice(c);
+			String cS = c + "";
+			httpTest("http://localhost:8080/test", cS);
+			drawAnnotations (p_value);
+			imp.updateAndDraw();
+		}
+		imp.setSlice(1);
+	}
 	
 	void drawAnnotations (int probability){
 		//Annotate the fiji image with detections
