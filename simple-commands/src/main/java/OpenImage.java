@@ -458,12 +458,16 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		
 		if (label.equals("->")){
 			fwd();
-			drawAnnotations (p_value);
+			if (detections.size() > 0){
+				drawAnnotations (p_value);
+			}	
 		}
 		
 		if (label.equals("<-")){
 			bwd();
-			drawAnnotations (p_value);
+			if (detections.size() > 0){
+				drawAnnotations (p_value);
+			}
 		}
 		
 		if (label.equals("Train"))
@@ -507,15 +511,6 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	}
 	
 	private void train() throws IOException, URISyntaxException {
-		// TODO Auto-generated method stub
-//		URI uri = new URI("http://localhost:8080/" + data);
-//		Desktop dt = Desktop.getDesktop();
-//		dt.browse(uri.resolve(uri));
-
-//		String response = HttpRequest.get("http://localhost:8080/" + data)
-//		        .accept("application/json")
-//		        .body();
-//		System.out.println("Response was: " + response);
 		
 		//Parse the positives and negatives list into Json string and post to URL//
 	      int  count = 0;
@@ -523,7 +518,8 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	      for (int[] pos : positives) {
 	    	  	String pos_x = String.format("%03d", pos[0]);
 	    	  	String pos_y = String.format("%03d", pos[1]);
-		        annotJson = annotJson + "\"[" + pos_x + ", " + pos_y + "]\", ";
+	    	  	String pos_frame = String.format("%04d", pos[2]);
+		        annotJson = annotJson + "\"[" + pos_x + ", " + pos_y + ", " + pos_frame + "]\", ";
 		        count++;
 		    }
 	      //Remove last comma
@@ -536,7 +532,8 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	      for (int[] neg : negatives) {
 	    	  	String neg_x = String.format("%03d", neg[0]);
 	    	  	String neg_y = String.format("%03d", neg[1]);
-		        annotJson = annotJson + "\"[" + neg_x + ", " + neg_y + "]\", ";
+	    	  	String neg_frame = String.format("%04d", neg[2]);
+		        annotJson = annotJson + "\"[" + neg_x + ", " + neg_y + ", " + neg_frame + "]\", ";
 		        count++;
 		    }
 	      //Remove last comma
@@ -619,7 +616,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 			overlay.get(slice).add(roi);
 			
 			//Add to arraylist
-			positives.add(new int[] { offscreenX, offscreenY });
+			positives.add(new int[] { offscreenX, offscreenY, slice });
 			System.out.println("Positives:");
 			for (int[] pos : positives) {
 		        System.out.print(Arrays.toString(pos) + " ");
@@ -637,7 +634,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 			roi.setStrokeColor(java.awt.Color.red);
 			overlay.get(slice).add(roi);
 			
-			negatives.add(new int[] { offscreenX, offscreenY });
+			negatives.add(new int[] { offscreenX, offscreenY, slice });
 			System.out.println("Negatives:");
 			for (int[] neg : negatives) {
 		        System.out.print(Arrays.toString(neg) + " ");
