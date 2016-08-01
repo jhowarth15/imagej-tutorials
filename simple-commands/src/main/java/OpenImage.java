@@ -180,7 +180,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	
 	List<int[]> positives = new ArrayList<int[]>();
 	List<int[]> negatives = new ArrayList<int[]>();
-	List<int[]> detections = new ArrayList<int[]>();
+	List<int[]> detections = new ArrayList<int[]>(); //[x,y,prob,nframe]
 	int p_value = 50;
 	
 	JSONObject obj = new JSONObject();
@@ -726,8 +726,8 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
             int i = 0;
             while (i < items.length){
                 //System.out.println(items[i]);
-                detections.add(new int[] { Integer.parseInt(items[i]), Integer.parseInt(items[i+1] ), Integer.parseInt(items[i+2] )});
-                i = i+3;
+                detections.add(new int[] { Integer.parseInt(items[i]), Integer.parseInt(items[i+1] ), Integer.parseInt(items[i+2] ), Integer.parseInt(items[i+3] )});
+                i = i+4;
             }
             
             System.out.print("Parsed detections::");
@@ -794,7 +794,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		    }
 		
 		for (int count = 0; count < no_dets; count++){
-			if (detections.get(count)[2] > probability){
+			if (detections.get(count)[2] > probability && detections.get(count)[3] == imp.getCurrentSlice()){
 				int x = detections.get(count)[0];
 	        	int y = detections.get(count)[1];
 	            improc.drawOval(x-5,y-5,10,10);
