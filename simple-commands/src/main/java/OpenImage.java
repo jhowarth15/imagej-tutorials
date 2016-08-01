@@ -47,6 +47,7 @@ import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
+import ij.gui.Overlay;
 import ij.gui.PlotWindow;
 import ij.gui.Roi;
 import ij.gui.Toolbar;
@@ -175,6 +176,8 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	File selectedFile, selectedFolder = null;
 	ImageWindow win = null;
 	int nChannels = 2;
+	
+	List<Overlay> overlay = new ArrayList<Overlay>();
 	
 	JFileChooser chooser, pngFolder;
 	
@@ -312,37 +315,14 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 			numSlices = imp.getStackSize();
 			slice = imp.getCurrentSlice();
 			this.stack = imp.getImageStack();
-			
-			//Save pngs		
-			pngFolder = new JFileChooser();
-			pngFolder.setCurrentDirectory(new java.io.File("../../"));
-			pngFolder.setDialogTitle("Choose a folder to save PNGs..");
-			pngFolder.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-			pngFolder.setMultiSelectionEnabled(false);
-			
-			int result1 = pngFolder.showOpenDialog(new JFrame());
-			if (result1 == JFileChooser.APPROVE_OPTION) {
-				selectedFolder = pngFolder.getSelectedFile();
-				folder = null;
-				folder = selectedFolder.toString();
-				System.out.println("Selected file: " + selectedFolder.getAbsolutePath());
-				
-				for (int s = imp.getCurrentSlice(); s <= numSlices; s++){
-					imp.setSlice(s);
-					//Send image to server
-					BufferedImage buffImage = imp.getBufferedImage();
-					PostFile(buffImage, "127.0.0.1", 9999);
-					//Save png image on user machine
-					FileSaver fs = new FileSaver(imp);
-					String formattedFrameNum = String.format("%04d", s);
-					String filepath = folder + "/" + "frame_" + formattedFrameNum + ".png";
-					fs.saveAsPng(filepath);
-				}	
-				
-			}
 
 			//Post images to server as pngs
-			//serverUploadAllFiles(folder);
+			for (int s = imp.getCurrentSlice(); s <= numSlices; s++){
+				imp.setSlice(s);
+				//Send image to server
+				BufferedImage buffImage = imp.getBufferedImage();
+				PostFile(buffImage, "127.0.0.1", 9999);
+			}
 			
 //			for (int s = 1; s <= numSlices; s++){
 				//imp.setSlice(s);
@@ -357,6 +337,16 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		
 		canvas = imp.getCanvas();
 		canvas.addMouseListener(this);
+		
+		//Create blank overlay for each frame
+		numSlices = imp.getStackSize();
+		for (int o = 0; o <= numSlices; o++){
+			overlay.add(new Overlay());
+		}
+		slice = imp.getCurrentSlice();
+		imp.setSlice(slice);
+		imp.updateAndDraw();
+		imp.setOverlay(overlay.get(slice));
 		
 
 	}
@@ -495,16 +485,24 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	}
 	
 	private void fwd() {
-		// TODO Auto-generated method stub
+		if (slice >= numSlices)
+			return;
 		imp.setSlice(slice+1);
+		slice++;
+		//System.out.println("New Frame: " + slice);
 		imp.updateAndDraw();
+		imp.setOverlay(overlay.get(slice));
 
 	}
 	
 	private void bwd() {
-		// TODO Auto-generated method stub
+		if (slice == 1)
+			return;
 		imp.setSlice(slice-1);
+		slice--;
+		//System.out.println("New Frame: " + slice);
 		imp.updateAndDraw();
+		imp.setOverlay(overlay.get(slice));
 
 	}
 	
@@ -601,6 +599,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		imp = WindowManager.getCurrentImage();
 		improc = imp.getProcessor();
 		
+		
 		int x = e.getX();
 		int y = e.getY();
 		
@@ -610,9 +609,16 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		
 		//Add positive annotation
 		if (clicked == 0){
-			improc.setColor(java.awt.Color.white);
-			improc.drawRect(x-5,y-5,10,10);
+//			improc.setColor(java.awt.Color.white);
+//			improc.drawRect(x-5,y-5,10,10);
 			
+			//Display annotation on image
+			imp.setOverlay(overlay.get(slice));
+			Roi roi = new Roi(x-5,y-5,10,10);
+			roi.setStrokeColor(java.awt.Color.blue);
+			overlay.get(slice).add(roi);
+			
+			//Add to arraylist
 			positives.add(new int[] { offscreenX, offscreenY });
 			System.out.println("Positives:");
 			for (int[] pos : positives) {
@@ -622,8 +628,14 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		
 		//Add negative annotation - hold shift and left click
 		if (clicked == 64){
-			improc.setColor(java.awt.Color.red);
-			improc.drawRect(x-5,y-5,10,10);
+//			improc.setColor(java.awt.Color.red);
+//			improc.drawRect(x-5,y-5,10,10);
+			
+			//Display annotation on image
+			imp.setOverlay(overlay.get(slice));
+			Roi roi = new Roi(x-5,y-5,10,10);
+			roi.setStrokeColor(java.awt.Color.red);
+			overlay.get(slice).add(roi);
 			
 			negatives.add(new int[] { offscreenX, offscreenY });
 			System.out.println("Negatives:");
@@ -690,7 +702,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		
 	}
 	
-	public HttpResponse httpTrain(String url, String body) {
+	public void httpTrain(String url, String body) {
 
         try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
             
@@ -708,7 +720,10 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
         
         catch (IOException ex) {
         }
-        return null;
+        
+        clearROIs();
+        
+        return;
     }
 	
 	public void httpTest(String url, String body) {
@@ -763,65 +778,46 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	
 	void drawAnnotations (int probability){
 		//Annotate the fiji image with detections
-		//IJ.showMessage(IJ.freeMemory());
-		
-		//System.out.println("Window got: " + imp.getWindow());
-		
-		//win.close();
+
+
 		IJ.freeMemory();
-		
-//		System.out.println("Retrieve from folder: " + folder);
-//		fop = new FolderOpener();
-//		this.imp = fop.openFolder(folder);
-		
-//		this.stack = imp.getImageStack();
-//		win = new ImageWindow(imp);
-//		imp.draw();
-		
-//		win.setImage(imp);
-//		imp.updateAndDraw();
 		
 		//Replace just the frame/slice in question
 		slice = imp.getCurrentSlice();
 		
-		String formattedFrameNum = String.format("%04d", slice);
-		String fileString = folder + "/frame_" + formattedFrameNum +".png";
-		System.out.println(fileString);
-		
-		BufferedImage loadedImg = null;
-        try {
-            loadedImg = ImageIO.read(new File(fileString));
-        } catch (IOException err) {
-            err.printStackTrace();
-        }
-
-		ImageProcessor ipLoadFrame = new ColorProcessor(loadedImg);
-		
-		stack.addSlice(null, ipLoadFrame, slice);
-		
-		stack.deleteSlice(slice);
-		
-		
 		//Draw the annotations
-				
-		improc = ipLoadFrame;//imp.getProcessor();
-        improc.setColor(java.awt.Color.yellow);
 		
 		int no_dets = 0;
         for (@SuppressWarnings("unused") int[] det : detections) {
 		        no_dets++;
 		    }
+        
+        overlay.get(slice).clear();
 		
 		for (int count = 0; count < no_dets; count++){
 			if (detections.get(count)[2] > probability && detections.get(count)[3] == imp.getCurrentSlice()){
 				int x = detections.get(count)[0];
 	        	int y = detections.get(count)[1];
-	            improc.drawOval(x-5,y-5,10,10);
+	            
+	            imp.setOverlay(overlay.get(slice));
+				Roi roi = new Roi(x-5,y-5,10,10);
+				roi.setStrokeColor(java.awt.Color.yellow);
+				overlay.get(slice).add(roi);
 			}
         	
         }
 		imp.updateAndDraw();
 		
+	}
+	
+	void clearROIs(){
+		//Create blank overlay for each frame
+		for (int o = 1; o <= numSlices; o++){
+			overlay.get(o).clear();
+		}
+		slice = imp.getCurrentSlice();
+		imp.updateAndDraw();
+		imp.setOverlay(overlay.get(slice));
 	}
 	
 	void serverUploadAllFiles(String folder){
