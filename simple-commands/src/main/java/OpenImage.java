@@ -876,6 +876,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		        no_dets++;
 		    }
         
+        PrintWriter writer = new PrintWriter(fileToSave, "UTF-8");
         String export = "";
 		for (int count = 0; count < no_dets; count++){
 			if (detections.get(count)[2] > p_value){
@@ -883,16 +884,12 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	        	int y = detections.get(count)[1];
 	        	int f = detections.get(count)[3];
 	            
-	        	export = export + "[" + x + "," + y + "," + f + "]," ;
+	        	export = x + "," + y + "," + f;
+	        	writer.println(export);
 			}
         	
         }
-		if (export.length() > 0)
-			export = export.substring(0, export.length()-1);
 		
-		//Export detections string
-		PrintWriter writer = new PrintWriter(fileToSave, "UTF-8");
-		writer.println(export);
 		writer.close();
 	}
 	
