@@ -8,9 +8,12 @@
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -106,6 +109,7 @@ import javax.swing.JLabel;
 import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import java.io.File;
 
@@ -211,6 +215,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		addButton("Train", panel);
 		addButton("Test", panel);
 		addButton("Test All", panel);
+		addButton("Export", panel);
 		
  		//Create the slider
  		JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
@@ -486,6 +491,17 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		}
 		if (label.equals("Test All"))
 			testAllFrames();
+		
+		if (label.equals("Export"))
+			try {
+				exportToTxt();
+			} catch (FileNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (UnsupportedEncodingException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 	}
 	
 	private void fwd() {
@@ -834,6 +850,50 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		    }
 		    IJ.showMessage("Images Uploaded");
 		}
+	}
+	
+	void exportToTxt() throws FileNotFoundException, UnsupportedEncodingException{
+		
+		//Choose file save
+		JFrame parentFrame = new JFrame();
+		 
+		JFileChooser fileChooser = new JFileChooser();
+		FileNameExtensionFilter filter = new FileNameExtensionFilter("TEXT FILES", "txt", "text");
+		fileChooser.setFileFilter(filter);
+		fileChooser.setDialogTitle("Specify a .txt file to save");   
+		 
+		int userSelection = fileChooser.showSaveDialog(parentFrame);
+		
+		File fileToSave = null;
+		if (userSelection == JFileChooser.APPROVE_OPTION) {
+		    fileToSave = fileChooser.getSelectedFile();
+		    System.out.println("Save as file: " + fileToSave.getAbsolutePath());
+		}
+		
+		//Create detections string for pvalue currently selected
+		int no_dets = 0;
+        for (@SuppressWarnings("unused") int[] det : detections) {
+		        no_dets++;
+		    }
+        
+        String export = "";
+		for (int count = 0; count < no_dets; count++){
+			if (detections.get(count)[2] > p_value){
+				int x = detections.get(count)[0];
+	        	int y = detections.get(count)[1];
+	        	int f = detections.get(count)[3];
+	            
+	        	export = export + "[" + x + "," + y + "," + f + "]," ;
+			}
+        	
+        }
+		if (export.length() > 0)
+			export = export.substring(0, export.length()-1);
+		
+		//Export detections string
+		PrintWriter writer = new PrintWriter(fileToSave, "UTF-8");
+		writer.println(export);
+		writer.close();
 	}
 	
 }
