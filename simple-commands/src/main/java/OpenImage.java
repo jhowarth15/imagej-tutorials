@@ -806,12 +806,12 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		
 		//Replace just the frame/slice in question
 		slice = imp.getCurrentSlice();
-		
-		overlay.get(slice).clear();
-		
+				
 		//Draw the annotations
 		if (detections.size() <= 0)
 			return;
+		
+		//overlay.get(slice).clear();
 		
 		for (int count = 0; count < detections.size()-1; count++){
 			if (detections.get(count)[2] > probability && detections.get(count)[3] == imp.getCurrentSlice()){
