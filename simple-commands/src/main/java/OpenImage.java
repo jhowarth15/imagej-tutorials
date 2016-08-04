@@ -216,6 +216,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		addButton("Test", panel);
 		addButton("Test All", panel);
 		addButton("Export", panel);
+		addButton("Clear", panel);
 		
  		//Create the slider
  		JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
@@ -463,16 +464,12 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		
 		if (label.equals("->")){
 			fwd();
-			if (detections.size() > 0){
-				drawAnnotations (p_value);
-			}	
+			drawAnnotations (p_value);
 		}
 		
 		if (label.equals("<-")){
 			bwd();
-			if (detections.size() > 0){
-				drawAnnotations (p_value);
-			}
+			drawAnnotations (p_value);
 		}
 		
 		if (label.equals("Train"))
@@ -502,7 +499,11 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
+		
+		if (label.equals("Clear"))
+			clearAnnotsAndDets();
 	}
+		
 	
 	private void fwd() {
 		if (slice >= numSlices)
@@ -573,6 +574,14 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	
 	private void test() throws IOException, URISyntaxException {
 		String currentFrame = imp.getCurrentSlice() + "";
+		
+		//Remove any prev detections on current frame
+		for (int count = detections.size()-1; count >= 0; count--){
+			if (detections.get(count)[3] == imp.getCurrentSlice()){
+				detections.remove(count);
+			}
+        	
+        }
 		
 		httpTest("http://localhost:8080/test", currentFrame);
 	}
@@ -798,16 +807,13 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		//Replace just the frame/slice in question
 		slice = imp.getCurrentSlice();
 		
+		overlay.get(slice).clear();
+		
 		//Draw the annotations
+		if (detections.size() <= 0)
+			return;
 		
-		int no_dets = 0;
-        for (@SuppressWarnings("unused") int[] det : detections) {
-		        no_dets++;
-		    }
-        
-        overlay.get(slice).clear();
-		
-		for (int count = 0; count < no_dets; count++){
+		for (int count = 0; count < detections.size()-1; count++){
 			if (detections.get(count)[2] > probability && detections.get(count)[3] == imp.getCurrentSlice()){
 				int x = detections.get(count)[0];
 	        	int y = detections.get(count)[1];
@@ -891,6 +897,14 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
         }
 		
 		writer.close();
+	}
+	
+	void clearAnnotsAndDets() {
+		positives.clear();
+		negatives.clear();
+		detections.clear();
+		drawAnnotations (p_value);
+		imp.updateAndDraw();
 	}
 	
 }
