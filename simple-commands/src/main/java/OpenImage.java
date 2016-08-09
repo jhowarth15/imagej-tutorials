@@ -94,6 +94,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
@@ -103,9 +104,11 @@ import java.util.*;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+import javax.swing.ButtonGroup;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JRadioButton;
 import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -180,6 +183,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	File selectedFile, selectedFolder = null;
 	ImageWindow win = null;
 	int nChannels = 2;
+	boolean classifier = true;
 	
 	List<Overlay> overlay = new ArrayList<Overlay>();
 	
@@ -217,6 +221,27 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		addButton("Test All", panel);
 		addButton("Export", panel);
 		addButton("Clear", panel);
+		
+		//Create the radio buttons.
+	    JRadioButton classifierButton = new JRadioButton("Classifier");
+	    classifierButton.setMnemonic(KeyEvent.VK_C);
+	    classifierButton.setActionCommand("Classifier");
+	    classifierButton.setSelected(true);
+
+	    JRadioButton regressionButton = new JRadioButton("Regression");
+	    regressionButton.setMnemonic(KeyEvent.VK_R);
+	    regressionButton.setActionCommand("Regression");
+
+	    //Group the radio buttons.
+	    ButtonGroup group = new ButtonGroup();
+	    group.add(classifierButton);
+	    group.add(regressionButton);
+	    
+	    classifierButton.addActionListener(this);
+	    regressionButton.addActionListener(this);
+	    
+	    panel.add(classifierButton);
+        panel.add(regressionButton);
 		
  		//Create the slider
  		JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
@@ -461,6 +486,16 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 //		System.out.println("numSlices: "+ numSlices);
 //		System.out.println("slice: " + slice);
 //		System.out.println("imp: " + imp);
+		
+		if (label.equals("Classifier")){
+			this.classifier = true;
+			System.out.println("Classifier/ Regression Mode: " + classifier);
+		}
+		
+		if (label.equals("Regression")){
+			this.classifier = false;
+			System.out.println("Classifier/ Regression Mode: " + classifier);
+		}
 		
 		if (label.equals("->")){
 			fwd();
