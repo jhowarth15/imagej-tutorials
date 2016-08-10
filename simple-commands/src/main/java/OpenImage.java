@@ -224,12 +224,10 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		
 		//Create the radio buttons.
 	    JRadioButton classifierButton = new JRadioButton("Classifier");
-	    classifierButton.setMnemonic(KeyEvent.VK_C);
 	    classifierButton.setActionCommand("Classifier");
 	    classifierButton.setSelected(true);
 
 	    JRadioButton regressionButton = new JRadioButton("Regression");
-	    regressionButton.setMnemonic(KeyEvent.VK_R);
 	    regressionButton.setActionCommand("Regression");
 
 	    //Group the radio buttons.
@@ -240,8 +238,8 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	    classifierButton.addActionListener(this);
 	    regressionButton.addActionListener(this);
 	    
-	    panel.add(classifierButton);
-        panel.add(regressionButton);
+	    add(classifierButton);
+        add(regressionButton);
 		
  		//Create the slider
  		JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
@@ -596,7 +594,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 	      
 	      
 	      //Add other settings data to json string: nchannels, 
-	      annotJson = annotJson + "]},{\"settings\": [" + nChannels + "," + imp.getCurrentSlice() + "," + numSlices;
+	      annotJson = annotJson + "]},{\"settings\": [" + nChannels + "," + imp.getCurrentSlice() + "," + numSlices + "," + classifier;
 	      
 	      annotJson = annotJson + "]}]";
 	      
@@ -846,7 +844,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		if (detections.size() <= 0)
 			return;
 		
-		//overlay.get(slice).clear();
+		overlay.get(slice).clear();
 		
 		for (int count = 0; count < detections.size()-1; count++){
 			if (detections.get(count)[2] > probability && detections.get(count)[3] == imp.getCurrentSlice()){
@@ -938,7 +936,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 		positives.clear();
 		negatives.clear();
 		detections.clear();
-		drawAnnotations (p_value);
+		clearROIs();
 		imp.updateAndDraw();
 	}
 	
