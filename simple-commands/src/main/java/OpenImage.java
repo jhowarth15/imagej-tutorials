@@ -829,6 +829,7 @@ public class OpenImage extends PlugInFrame implements Command, MouseListener, Ac
 			imp.updateAndDraw();
 		}
 		imp.setSlice(1);
+		drawAnnotations (p_value);
 	}
 	
 	void drawAnnotations (int probability){
